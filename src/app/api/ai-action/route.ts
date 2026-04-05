@@ -54,11 +54,16 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to parse JSON out of AI response string.");
     }
     
-    const aiDecision = JSON.parse(jsonMatch[0]);
+    const aiDecision = JSON.parse(jsonMatch[0]) as {
+      trapFrequencyMs: number;
+      attackType: "corruption" | "trap" | "block";
+      reason: string;
+    };
 
     return NextResponse.json(aiDecision);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('AI Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
