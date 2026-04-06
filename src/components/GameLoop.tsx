@@ -4,18 +4,36 @@ import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 
 export function GameLoop() {
-  const { status, entities, playerPos, handleAITurn, spawnPredictedThreat, aiTrapFrequencyMs, gameStartTime, updateSurvival, playerHunger } = useGameStore();
+  const {
+    status,
+    entities,
+    playerPos,
+    playerEnergy,
+    playerHunger,
+    sessionId,
+    handleAITurn,
+    spawnPredictedThreat,
+    aiTrapFrequencyMs,
+    gameStartTime,
+    updateSurvival,
+  } = useGameStore();
   const [isProcessing, setIsProcessing] = useState(false);
   
   const playerPosRef = useRef(playerPos);
+  const playerEnergyRef = useRef(playerEnergy);
+  const playerHungerRef = useRef(playerHunger);
+  const sessionIdRef = useRef(sessionId);
   const entitiesRef = useRef(entities);
   const startTimeRef = useRef(gameStartTime);
 
   useEffect(() => {
     playerPosRef.current = playerPos;
+    playerEnergyRef.current = playerEnergy;
+    playerHungerRef.current = playerHunger;
+    sessionIdRef.current = sessionId;
     entitiesRef.current = entities;
     startTimeRef.current = gameStartTime;
-  }, [playerPos, entities, gameStartTime]);
+  }, [playerPos, playerEnergy, playerHunger, sessionId, entities, gameStartTime]);
 
   // Survival Ticking (Hunger/Vision)
   useEffect(() => {
@@ -45,6 +63,7 @@ export function GameLoop() {
     // Fetch master strategy every 10 seconds
     const strategyTimer = setInterval(async () => {
       if (isProcessing || status !== 'playing') return;
+      if (!sessionIdRef.current) return;
       setIsProcessing(true);
       try {
         const corruptedCount = entitiesRef.current.filter(e => e.type === 'corruption').length;
@@ -54,6 +73,11 @@ export function GameLoop() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            sessionId: sessionIdRef.current,
+            playerX: playerPosRef.current.x,
+            playerY: playerPosRef.current.y,
+            playerEnergy: playerEnergyRef.current,
+            playerHunger: playerHungerRef.current,
             elapsedSeconds: elapsed,
             corruptedCount
           })

@@ -21,6 +21,19 @@ export async function POST(req: NextRequest) {
     // 2. Parse Request Body
     const body = await req.json();
     const { sessionId, playerX, playerY, playerEnergy, playerHunger } = body;
+    if (
+      typeof sessionId !== 'string' ||
+      sessionId.trim().length === 0 ||
+      typeof playerX !== 'number' ||
+      typeof playerY !== 'number' ||
+      typeof playerEnergy !== 'number' ||
+      typeof playerHunger !== 'number'
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid request payload for AI action endpoint' },
+        { status: 400 }
+      );
+    }
 
     // 3. Connect DB
     if (!env.DB && process.env.NODE_ENV === 'production') {
