@@ -11,7 +11,7 @@
   "dependencies": {
     "@google/genai": "^1.48.0",
     "drizzle-orm": "^0.45.2",
-    "next": "16.2.2",
+    "next": "15.4.11",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zustand": "^5.0.12"
@@ -24,7 +24,7 @@
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.2.2",
+    "eslint-config-next": "15.4.11",
     "eslint-plugin-next-on-pages": "^1.13.16",
     "tailwindcss": "^4",
     "typescript": "^5",
