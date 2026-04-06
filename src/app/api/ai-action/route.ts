@@ -9,15 +9,26 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { sessionId, playerX, playerY, playerEnergy, playerHunger, elapsedSeconds } = body;
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: 'Gemini API Key missing' }, { status: 500 });
+    const context = getRequestContext();
+    const env = context.env as any;
     
-    const db = getDb(getRequestContext().env);
+    // 1. Get API Key from Cloudflare Env or fallback to process.env
+    const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Gemini API Key missing in environment' }, { status: 500 });
+    }
 
-    // 1. Fetch Sliding Window History (Last 12 significant actions)
+    // 2. Parse Request Body
+    const body = await req.json();
+    const { sessionId, playerX, playerY, playerEnergy, playerHunger } = body;
+
+    // 3. Connect DB
+    if (!env.DB && process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'D1 Database [DB] binding is missing' }, { status: 500 });
+    }
+    const db = getDb(env);
+
+    // 4. Fetch Sliding Window History (Last 12 significant actions)
     const historyLogs = await db.select()
       .from(actions)
       .where(eq(actions.sessionId, sessionId))
@@ -28,12 +39,12 @@ export async function POST(req: NextRequest) {
       return `${log.actionType} at (${log.posX}, ${log.posY}) ${log.details ? ': ' + log.details : ''}`;
     }).join('\n');
 
-    // 2. Fetch Session Stats for "Learning"
+    // 5. Fetch Session Stats for "Learning"
     const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
     const qteSuccess = session?.qteSuccessCount || 0;
     const qteFail = session?.qteFailCount || 0;
 
-    // 3. Determine Sector Progression
+    // 6. Determine Sector Progression
     let sector = 1;
     let unlockedPowers = "Basic Traps";
     if (playerX > 40) { sector = 2; unlockedPowers = "Basic Traps + Corruption (drain energy)"; }
@@ -76,12 +87,7 @@ export async function POST(req: NextRequest) {
     const aiResponseText = response.text;
     if (!aiResponseText) throw new Error("AI response text is empty");
 
-    const aiDecision = JSON.parse(aiResponseText) as {
-      narration: string;
-      trapFrequencyMs: number;
-      attackType: "trap" | "corruption" | "block";
-      reason: string;
-    };
+    const aiDecision = JSON.parse(aiResponseText);
 
     return NextResponse.json(aiDecision);
   } catch (error: unknown) {

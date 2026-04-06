@@ -8,8 +8,15 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
+    const context = getRequestContext();
+    const env = context.env as any;
+    
+    if (!env.DB && process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'D1 Database [DB] binding is missing' }, { status: 500 });
+    }
+
     const { sessionId, actionType, x, y, details } = await req.json();
-    const db = getDb(getRequestContext().env);
+    const db = getDb(env);
 
     // 1. Ensure session exists
     await db.insert(sessions).values({
@@ -48,7 +55,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    console.error('Log Error:', err);
-    return NextResponse.json({ error: 'Failed to log action' }, { status: 500 });
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('Log Error:', errorMsg);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
