@@ -23,7 +23,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^9",
+    "eslint": "8.57.1",
     "eslint-config-next": "15.4.11",
     "eslint-plugin-next-on-pages": "^1.13.16",
     "tailwindcss": "^4",
