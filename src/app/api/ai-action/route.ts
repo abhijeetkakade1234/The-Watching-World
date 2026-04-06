@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { getDb } from '@/db';
+import { getDb, type Env } from '@/db';
 import { actions, sessions } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getRequestContext } from '@cloudflare/next-on-pages';
@@ -10,7 +10,7 @@ export const runtime = 'edge';
 export async function POST(req: NextRequest) {
   try {
     const context = getRequestContext();
-    const env = context.env as any;
+    const env = context.env as Env;
     
     // 1. Get API Key from Cloudflare Env or fallback to process.env
     const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       .orderBy(desc(actions.timestamp))
       .limit(12);
 
-    const historySummary = historyLogs.reverse().map(log => {
+    const historySummary = (historyLogs as (typeof actions.$inferSelect)[]).reverse().map(log => {
       return `${log.actionType} at (${log.posX}, ${log.posY}) ${log.details ? ': ' + log.details : ''}`;
     }).join('\n');
 

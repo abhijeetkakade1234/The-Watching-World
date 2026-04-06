@@ -36,7 +36,7 @@ export const TILE_PROPERTIES: Record<number, { walkable: boolean, name: string }
   [TILES.HL]: { walkable: true, name: 'heal' },
 };
 
-const { G1, G2, G3, TG, DT, DV, WT, WI, TR, TK, BU, RK, CL, ST, BR, SH, SF, CG, CE, CR, WS, WE, SA, DS, MT, WF, FO, HL } = TILES;
+const { G1, G2, TR, WI, BR, SH, SF, CG, CE, SA, DS, MT, FO, HL, ST } = TILES;
 
 const MAP_W = 160;
 const MAP_H = 120;

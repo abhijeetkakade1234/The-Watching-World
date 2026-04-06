@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { level1Map, TILE_PROPERTIES } from '../data/maps/level1';
+import { level1Map } from '../data/maps/level1';
 import { drawTile, COLS, ROWS, TILE_SIZE } from '../utils/tile_renderer';
 
 export function MapViewport() {

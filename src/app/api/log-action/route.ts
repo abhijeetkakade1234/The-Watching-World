@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/db';
+import { getDb, type Env } from '@/db';
 import { actions, sessions } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { getRequestContext } from '@cloudflare/next-on-pages';
@@ -9,7 +9,7 @@ export const runtime = 'edge';
 export async function POST(req: NextRequest) {
   try {
     const context = getRequestContext();
-    const env = context.env as any;
+    const env = context.env as Env;
     
     if (!env.DB && process.env.NODE_ENV === 'production') {
       return NextResponse.json({ error: 'D1 Database [DB] binding is missing' }, { status: 500 });
