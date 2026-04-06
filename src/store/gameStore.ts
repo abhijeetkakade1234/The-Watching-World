@@ -11,6 +11,12 @@ export interface DynamicEntity {
   isHidden?: boolean;
 }
 
+interface AIAction {
+  narration?: string;
+  trapFrequencyMs?: number;
+  attackType?: 'trap' | 'block' | 'corruption';
+}
+
 interface GameState {
   sessionId: string;
   playerPos: { x: number; y: number };
@@ -35,7 +41,7 @@ interface GameState {
   movePlayer: (dx: number, dy: number) => void;
   updateSurvival: () => void;
   togglePause: () => void;
-  handleAITurn: (aiAction: any) => void;
+  handleAITurn: (aiAction: AIAction) => void;
   resolveQTE: (success: boolean) => void;
   spawnPredictedThreat: () => void;
 }
@@ -72,7 +78,13 @@ function hasPathToGoal(start: {x: number, y: number}, goal: {x: number, y: numbe
 }
 
 // Helper: Log Action to telemetry
-async function logAction(sessionId: string, actionType: string, x?: number, y?: number, details?: any) {
+async function logAction(
+  sessionId: string,
+  actionType: string,
+  x?: number,
+  y?: number,
+  details?: Record<string, unknown>
+) {
   try {
     await fetch('/api/log-action', {
       method: 'POST',
@@ -220,7 +232,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ playerPos: { x: targetX, y: targetY }, playerHistory: newHistory, lastMoveTime: now, playerHunger: newHunger, playerEnergy: newEnergy });
   },
 
-  handleAITurn: (aiAction) => {
+  handleAITurn: (aiAction: AIAction) => {
     const state = get();
     if (state.status !== 'playing') return;
 

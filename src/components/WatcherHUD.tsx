@@ -20,13 +20,13 @@ export function WatcherHUD() {
          <h2 className="relative text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight text-white drop-shadow-[0_0_15px_rgba(248,113,113,1)] uppercase animate-in fade-in zoom-in duration-1000">
             <span className="text-red-500/80 mr-4 font-mono">[WATCHER]:</span>
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 via-white to-cyan-400 drop-shadow-xl">
-               "{currentNarration}"
+               &quot;{currentNarration}&quot;
             </span>
          </h2>
          
          {/* Secondary "Glitch" Text Layer */}
          <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl sm:text-4xl md:text-5xl font-black italic tracking-tight text-cyan-400/20 blur-sm uppercase animate-pulse">
-            "{currentNarration}"
+            &quot;{currentNarration}&quot;
          </h2>
          
          <div className="mt-6 flex justify-center gap-2">

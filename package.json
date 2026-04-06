@@ -2,11 +2,13 @@
   "name": "the-watching-world",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@google/genai": "^1.48.0",
@@ -26,6 +28,7 @@
     "eslint": "8.57.1",
     "eslint-config-next": "15.4.11",
     "eslint-plugin-next-on-pages": "^1.13.16",
+    "husky": "^9.1.7",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.80.0"
