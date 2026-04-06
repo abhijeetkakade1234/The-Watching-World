@@ -4,6 +4,7 @@ import { HealthBar } from '@/components/HealthBar';
 import { PauseOverlay } from '@/components/PauseOverlay';
 import { MapViewport } from '@/components/MapViewport';
 import { MiniMap } from '@/components/MiniMap';
+import { WatcherHUD } from '@/components/WatcherHUD';
 
 export const metadata = {
   title: 'The Watching World',
@@ -18,6 +19,7 @@ export default function Home() {
       <PauseOverlay />
       <HealthBar />
       <MiniMap />
+      <WatcherHUD />
       
       {/* Centered Canvas Container */}
       <div id="game-container" className="w-full h-full flex flex-col items-center justify-center z-0">

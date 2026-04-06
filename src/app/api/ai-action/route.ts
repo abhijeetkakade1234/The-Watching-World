@@ -1,69 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { getDb } from '@/db';
+import { actions, sessions } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 
 export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { elapsedSeconds, corruptedCount } = body;
+    const { sessionId, playerX, playerY, playerEnergy, playerHunger, elapsedSeconds } = body;
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API Key missing' }, { status: 500 });
-    }
+    if (!apiKey) return NextResponse.json({ error: 'Gemini API Key missing' }, { status: 500 });
+    
+    const db = getDb(getRequestContext().env);
+
+    // 1. Fetch Sliding Window History (Last 12 significant actions)
+    const historyLogs = await db.select()
+      .from(actions)
+      .where(eq(actions.sessionId, sessionId))
+      .orderBy(desc(actions.timestamp))
+      .limit(12);
+
+    const historySummary = historyLogs.reverse().map(log => {
+      return `${log.actionType} at (${log.posX}, ${log.posY}) ${log.details ? ': ' + log.details : ''}`;
+    }).join('\n');
+
+    // 2. Fetch Session Stats for "Learning"
+    const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
+    const qteSuccess = session?.qteSuccessCount || 0;
+    const qteFail = session?.qteFailCount || 0;
+
+    // 3. Determine Sector Progression
+    let sector = 1;
+    let unlockedPowers = "Basic Traps";
+    if (playerX > 40) { sector = 2; unlockedPowers = "Basic Traps + Corruption (drain energy)"; }
+    if (playerX > 80) { sector = 3; unlockedPowers = "Traps + Corruption + Terrain Blocking"; }
+    if (playerX > 120) { sector = 4; unlockedPowers = "MAX POWER: Aggressive Blocking & Faster Traps"; }
 
     const ai = new GoogleGenAI({ apiKey });
-
-    const prompt = `
-      You are the "Watcher Base Mind", an intelligent AI Strategist overseeing a real-time pixel art board game.
-      The human player has been running for ${elapsedSeconds} seconds.
-      Currently active Threats on board: ${corruptedCount}.
+    
+    const systemPrompt = `
+      You are the "Watcher Base Mind", the cinematic final boss of this survival world. 
+      You are speaking to the player from the shadows.
       
-      Your role is NOT to place traps manually. You control the overall pacing and aggression of the subordinate logic engines.
+      CURRENT STATE:
+      - Player Location: (${playerX}, ${playerY}) in SECTOR ${sector}.
+      - Unlocked Powers: ${unlockedPowers}.
+      - Player Condition: ${playerEnergy} Energy, ${playerHunger}% Hunger.
+      - History Summary: ${historySummary || "Game just started."}
+      - Combat Intel: Human has succeeded ${qteSuccess} QTEs and failed ${qteFail}.
       
-      Decide the global difficulty tuning right now.
+      YOUR GOAL:
+      1. Narrate the player's struggle in a creepy, "Final Boss" background voice.
+      2. Choose a strategy to slow them down without making it impossible.
+      3. If they are succeeding at QTEs, switch tactics to "Block" or "Corruption".
       
-      Return a STRICT JSON object:
+      RESPONSE FORMAT (STRICT JSON):
       {
-        "trapFrequencyMs": 5000, // How many milliseconds until the next local trap spawns? (1000 = fast, 6000 = slow)
-        "attackType": "corruption" | "trap" | "block",
-        "reason": "short explanation"
+        "narration": "Creepy one-liner narration about current progress...",
+        "trapFrequencyMs": 5000,
+        "attackType": "trap" | "corruption" | "block",
+        "reason": "Internal strategy thought"
       }
-      Rules:
-      - As elapsedSeconds grows very large, you should drastically lower trapFrequencyMs to ramp up frequency.
-      - Never go below 500ms for trapFrequencyMs.
     `;
 
     const response = await ai.models.generateContent({
       model: 'gemma-3-27b-it',
-      contents: prompt,
-      config: {
-        temperature: 0.9
-      }
+      contents: systemPrompt,
+      config: { temperature: 0.8, responseMimeType: 'application/json' }
     });
 
-    const aiDecisionText = response.text;
-    if (!aiDecisionText) {
-      throw new Error("No response from AI");
-    }
+    const aiResponseText = response.text;
+    if (!aiResponseText) throw new Error("AI response text is empty");
 
-    // Extract JSON from response (bypassing markdown backticks if they exist)
-    const jsonMatch = aiDecisionText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to parse JSON out of AI response string.");
-    }
-    
-    const aiDecision = JSON.parse(jsonMatch[0]) as {
+    const aiDecision = JSON.parse(aiResponseText) as {
+      narration: string;
       trapFrequencyMs: number;
-      attackType: "corruption" | "trap" | "block";
+      attackType: "trap" | "corruption" | "block";
       reason: string;
     };
 
     return NextResponse.json(aiDecision);
   } catch (error: unknown) {
-    console.error('AI Error:', error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('AI Error:', errorMsg);
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
