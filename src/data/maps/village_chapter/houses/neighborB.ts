@@ -12,7 +12,6 @@ const E = TILES_INT.EMPTY;
 const FL = TILES_INT.FLOOR;
 const W = TILES_INT.WALL;
 const WN = TILES_INT.WINDOW;
-const BD = TILES_INT.BED;
 const TB = TILES_INT.TABLE;
 const SH = TILES_INT.SHELF;
 const RG = TILES_INT.RUG;

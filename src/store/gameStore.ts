@@ -27,6 +27,8 @@ interface GameState {
   // Map state
   currentMap: MapId;
   returnPos: { x: number; y: number } | null; 
+  entryFromWorldPos: { x: number; y: number } | null;
+  isMapTransitioning: boolean;
   hasMiniMap: boolean;
   isMiniMapOpen: boolean;
   visibilityRadius: number; 
@@ -47,6 +49,8 @@ interface GameState {
   spawnPredictedThreat: () => void;
   handleAITurn: (aiStrategy: unknown) => void;
   resolveQTE: (success: boolean) => void;
+  syncRouteMap: (mapId: MapId) => void;
+  setMapTransitioning: (isTransitioning: boolean) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -68,6 +72,8 @@ export const useGameStore = create<GameState>()(
       isNarrationActive: false,
       currentMap: 'village_chapter',
       returnPos: null,
+      entryFromWorldPos: null,
+      isMapTransitioning: false,
       hasMiniMap: false,
       isMiniMapOpen: false,
       visibilityRadius: 5,
@@ -103,6 +109,10 @@ export const useGameStore = create<GameState>()(
           entities: startingEntities,
           currentNarration: '',
           isNarrationActive: false,
+          currentMap: 'village_chapter',
+          returnPos: null,
+          entryFromWorldPos: null,
+          isMapTransitioning: false,
           hasMiniMap: false,
           isMiniMapOpen: false,
           visibilityRadius: 5,
@@ -213,6 +223,50 @@ export const useGameStore = create<GameState>()(
         });
       },
 
+      syncRouteMap: (mapId: MapId) => {
+        const state = get();
+        if (!state.sessionId) {
+          get().initializeGame();
+        }
+
+        const latestState = get();
+        if (latestState.currentMap === mapId) {
+          set({ isMapTransitioning: false });
+          return;
+        }
+
+        const persistentEntities = latestState.entities.filter(e => !e.id.startsWith('temp-'));
+
+        if (mapId === 'village_chapter') {
+          set({
+            currentMap: 'village_chapter',
+            entities: persistentEntities,
+            interactionMessage: null,
+            isMapTransitioning: false,
+          });
+          return;
+        }
+
+        const house = HOUSE_MAPS[mapId];
+        if (!house) {
+          set({ isMapTransitioning: false });
+          return;
+        }
+
+        set({
+          currentMap: mapId,
+          playerPos: { x: house.spawn.x, y: house.spawn.y },
+          entities: [
+            ...persistentEntities,
+            ...house.entities.map((e: DynamicEntity) => ({ ...e, id: 'temp-' + e.id })),
+          ],
+          interactionMessage: null,
+          isMapTransitioning: false,
+        });
+      },
+
+      setMapTransitioning: (isTransitioning: boolean) => set({ isMapTransitioning: isTransitioning }),
+
       movePlayer: (dx, dy) => {
         const state = get();
         if (state.status !== 'playing') return;
@@ -227,11 +281,43 @@ export const useGameStore = create<GameState>()(
           const intTile = house.map[targetY][targetX];
           
           if (intTile === 9) { // EXIT
-            const back = state.returnPos ?? { x: SPAWN_POINT.x, y: SPAWN_POINT.y + 1 };
+            const preferredExit = state.entryFromWorldPos ?? state.returnPos ?? { x: SPAWN_POINT.x, y: SPAWN_POINT.y + 1 };
+            const isWalkableWorldTile = (x: number, y: number) => {
+              if (y < 0 || y >= chapter1Map.length || x < 0 || x >= chapter1Map[0].length) return false;
+              const tile = chapter1Map[y][x];
+              if (!TILE_PROPERTIES[tile]?.walkable) return false;
+              const blocking = state.entities.find(e => {
+                if (e.isHidden || e.id.startsWith('temp-')) return false;
+                const w = e.width || 1;
+                const h = e.height || 1;
+                const inside = x >= e.x && x < e.x + w && y >= e.y && y < e.y + h;
+                return inside && (e.type === 'npc' || e.type === 'block' || e.type === 'chest');
+              });
+              return !blocking;
+            };
+
+            const findNearestWorldTile = (x: number, y: number) => {
+              if (isWalkableWorldTile(x, y)) return { x, y };
+              const deltas = [
+                [0, -1], [1, 0], [0, 1], [-1, 0],
+                [1, -1], [1, 1], [-1, 1], [-1, -1],
+                [0, -2], [2, 0], [0, 2], [-2, 0],
+              ] as const;
+              for (const [dx2, dy2] of deltas) {
+                const nx = x + dx2;
+                const ny = y + dy2;
+                if (isWalkableWorldTile(nx, ny)) return { x: nx, y: ny };
+              }
+              return { x: SPAWN_POINT.x, y: SPAWN_POINT.y + 1 };
+            };
+
+            const exitPos = findNearestWorldTile(preferredExit.x, preferredExit.y);
             set({
               currentMap: 'village_chapter',
-              playerPos: { x: back.x, y: back.y + 1 },
+              playerPos: exitPos,
               returnPos: null,
+              entryFromWorldPos: null,
+              isMapTransitioning: true,
               entities: state.entities.filter(e => !e.id.startsWith('temp-')),
               interactionMessage: null,
               currentNarration: "Exiting to Village Square...",
@@ -292,6 +378,8 @@ export const useGameStore = create<GameState>()(
               currentMap: houseId,
               playerPos: { x: house.spawn.x, y: house.spawn.y },
               returnPos: { x: targetX, y: targetY },
+              entryFromWorldPos: { x: state.playerPos.x, y: state.playerPos.y },
+              isMapTransitioning: true,
               entities: [...state.entities, ...house.entities.map((e: DynamicEntity) => ({ ...e, id: 'temp-' + e.id }))],
               currentNarration: `Entering ${houseName}...`,
               isNarrationActive: true
@@ -353,7 +441,7 @@ export const useGameStore = create<GameState>()(
       }
     }),
     {
-      name: 'watching-world-save',
+      name: 'watching-world-save-chapter1',
     }
   )
 );

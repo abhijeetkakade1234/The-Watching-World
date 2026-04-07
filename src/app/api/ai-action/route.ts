@@ -3,14 +3,12 @@ import { GoogleGenAI } from '@google/genai';
 import { getDb, type Env } from '@/db';
 import { actions, sessions } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import {
   aiActionDecisionSchema,
   aiActionRequestSchema,
   type AiActionDecision,
 } from '@/types/api';
-
-export const runtime = 'edge';
 
 const FALLBACK_AI_DECISION: AiActionDecision = {
   narration: 'The Watcher waits in the silence.',
@@ -22,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     let env: Env;
     try {
-      const context = getRequestContext();
+      const context = await getCloudflareContext({ async: true });
       env = (context?.env || process.env) as Env;
     } catch {
       env = process.env as Env;

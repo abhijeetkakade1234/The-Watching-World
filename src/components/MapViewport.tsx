@@ -200,10 +200,11 @@ export function MapViewport() {
                 opacity: 1.0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 imageRendering: 'pixelated',
-                zIndex: 5,
+               zIndex: 5,
               }}
             >
                {entity.sprite ? (
+                 // eslint-disable-next-line @next/next/no-img-element -- Pixel sprites are intentionally rendered in a canvas-like overlay.
                  <img 
                    src={entity.sprite} 
                    alt={entity.id} 

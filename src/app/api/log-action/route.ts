@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb, type Env } from '@/db';
 import { actions, sessions } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { LOG_ACTION, logActionRequestSchema, logActionResponseSchema } from '@/types/api';
-
-export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     let env: Env;
     try {
-      const context = getRequestContext();
+      const context = await getCloudflareContext({ async: true });
       env = (context?.env || process.env) as Env;
     } catch {
       env = process.env as Env;

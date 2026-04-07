@@ -1,5 +1,5 @@
 import { TILES, COLS as CH1_COLS, ROWS as CH1_ROWS } from '../data/maps/village_chapter/constants';
-import { TILES_INT, TILE_PROPERTIES_INT } from '../data/maps/village_chapter/houses/constants';
+import { TILES_INT } from '../data/maps/village_chapter/houses/constants';
 
 export const TILE_SIZE = 16;
 export const COLS = CH1_COLS;

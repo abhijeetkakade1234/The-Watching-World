@@ -3,21 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
-// Reserved for future chapters. Keep logic compiled but not mounted in Chapter 1 UI.
-export function QTEOverlay() {
-  const { qteActive, resolveQTE } = useGameStore();
+function ActiveQTE({ resolveQTE }: { resolveQTE: (success: boolean) => void }) {
   const [taps, setTaps] = useState(0);
   const requiredTaps = 12;
   const timeLimitMs = 2500;
   const [timeLeft, setTimeLeft] = useState(100); // Percentage
 
   useEffect(() => {
-    if (!qteActive) {
-      setTaps(0);
-      setTimeLeft(100);
-      return;
-    }
-
     // Timer Logic
     const startTime = Date.now();
     const timer = setInterval(() => {
@@ -32,28 +24,24 @@ export function QTEOverlay() {
     }, 50);
 
     return () => clearInterval(timer);
-  }, [qteActive, resolveQTE]);
+  }, [resolveQTE]);
 
   useEffect(() => {
-    if (qteActive && taps >= requiredTaps) {
-      resolveQTE(true); 
+    if (taps >= requiredTaps) {
+      resolveQTE(true);
     }
-  }, [taps, qteActive, resolveQTE, requiredTaps]);
+  }, [taps, resolveQTE, requiredTaps]);
 
   useEffect(() => {
-    if (!qteActive) return;
-
     const handleKey = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        setTaps(prev => prev + 1);
+        setTaps((prev) => prev + 1);
       }
     };
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [qteActive]);
-
-  if (!qteActive) return null;
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-red-950/80 backdrop-blur-md">
@@ -65,10 +53,10 @@ export function QTEOverlay() {
           MASH [SPACEBAR] TO ESCAPE!
         </p>
       </div>
-      
+
       {/* Tap Progress */}
       <div className="w-1/2 max-w-2xl mt-12 bg-gray-900 border-4 border-red-900 rounded-full h-12 overflow-hidden shadow-[0_0_30px_rgba(0,0,0,1)] relative">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-red-600 to-yellow-400 transition-all duration-75"
           style={{ width: `${(taps / requiredTaps) * 100}%` }}
         />
@@ -79,11 +67,20 @@ export function QTEOverlay() {
 
       {/* Time Remaining Bar */}
       <div className="w-1/3 mt-6 bg-gray-900 border-2 border-slate-700 h-2 rounded-full overflow-hidden">
-         <div 
-           className={`${timeLeft < 30 ? 'bg-red-500 animate-pulse' : 'bg-cyan-500'} h-full transition-all duration-[50ms]`}
-           style={{ width: `${timeLeft}%` }}
-         />
+        <div
+          className={`${timeLeft < 30 ? 'bg-red-500 animate-pulse' : 'bg-cyan-500'} h-full transition-all duration-[50ms]`}
+          style={{ width: `${timeLeft}%` }}
+        />
       </div>
     </div>
   );
+}
+
+// Reserved for future chapters. Keep logic compiled but not mounted in Chapter 1 UI.
+export function QTEOverlay() {
+  const { qteActive, resolveQTE } = useGameStore();
+
+  if (!qteActive) return null;
+
+  return <ActiveQTE resolveQTE={resolveQTE} />;
 }
