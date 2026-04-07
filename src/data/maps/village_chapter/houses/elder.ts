@@ -33,7 +33,7 @@ export const elderMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E ],
 ];
 
-import { DynamicEntity } from '@/types/game';
+import type { DynamicEntity } from '@/types/game';
 
 export const ELDER_SPAWN = { x: 7, y: 10 };
 export const ELDER_ENTITIES: DynamicEntity[] = [

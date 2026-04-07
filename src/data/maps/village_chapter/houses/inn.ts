@@ -35,7 +35,7 @@ export const innMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E ],
 ];
 
-import { DynamicEntity } from '@/types/game';
+import type { DynamicEntity } from '@/types/game';
 
 export const INN_SPAWN = { x: 9, y: 13 };
 export const INN_ENTITIES: DynamicEntity[] = [

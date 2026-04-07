@@ -6,13 +6,17 @@ import {
 import { TILE_PROPERTIES_INT } from '../data/maps/village_chapter/houses/constants';
 import { SPAWN_POINT, EXIT_ZONE } from '../data/maps/village_chapter/index';
 
-import { DynamicEntity, GameStatus, MapId } from '@/types/game';
+import type { DynamicEntity, GameStatus, MapId } from '@/types/game';
 
 interface GameState {
   sessionId: string;
   playerPos: { x: number; y: number };
   playerHistory: { x: number; y: number }[];
   lastMoveTime: number;
+  playerEnergy: number;
+  playerHunger: number;
+  qteActive: boolean;
+  aiTrapFrequencyMs: number;
   status: GameStatus;
   entities: DynamicEntity[];
   gameStartTime: number;
@@ -39,6 +43,10 @@ interface GameState {
   startInteracting: (entityId: string) => void;
   stopInteracting: () => void;
   tickInteraction: (dt: number) => void;
+  updateSurvival: () => void;
+  spawnPredictedThreat: () => void;
+  handleAITurn: (aiStrategy: unknown) => void;
+  resolveQTE: (success: boolean) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -48,6 +56,10 @@ export const useGameStore = create<GameState>()(
       playerPos: { x: 20, y: 18 },
       playerHistory: [],
       lastMoveTime: 0,
+      playerEnergy: 300,
+      playerHunger: 0,
+      qteActive: false,
+      aiTrapFrequencyMs: 15000,
       status: 'playing',
       entities: [],
       gameStartTime: 0,
@@ -82,6 +94,10 @@ export const useGameStore = create<GameState>()(
           playerPos: { x: spawnX, y: spawnY },
           playerHistory: [{ x: spawnX, y: spawnY }],
           lastMoveTime: 0,
+          playerEnergy: 300,
+          playerHunger: 0,
+          qteActive: false,
+          aiTrapFrequencyMs: 15000,
           status: 'playing',
           gameStartTime: Date.now(),
           entities: startingEntities,
@@ -150,6 +166,51 @@ export const useGameStore = create<GameState>()(
         } else {
           set({ interactionProgress: newProgress });
         }
+      },
+
+      updateSurvival: () => {
+        const state = get();
+        if (state.status !== 'playing') return;
+
+        const nextHunger = Math.min(100, state.playerHunger + 0.2);
+        const energyDrain = nextHunger > 85 ? 0.6 : 0.2;
+        const nextEnergy = Math.max(0, state.playerEnergy - energyDrain);
+        const nextVisibility = Math.max(2, 5 - nextHunger / 25);
+
+        if (nextEnergy <= 0) {
+          set({
+            playerEnergy: 0,
+            playerHunger: nextHunger,
+            visibilityRadius: nextVisibility,
+            status: 'game_over',
+          });
+          return;
+        }
+
+        set({
+          playerEnergy: nextEnergy,
+          playerHunger: nextHunger,
+          visibilityRadius: nextVisibility,
+        });
+      },
+
+      spawnPredictedThreat: () => {
+        // Placeholder hook for AI threat spawning. Keeping this no-op
+        // preserves type contracts for currently mounted overlays.
+      },
+
+      handleAITurn: (aiStrategy: unknown) => {
+        if (!aiStrategy || typeof aiStrategy !== 'object') return;
+      },
+
+      resolveQTE: (success: boolean) => {
+        const state = get();
+        if (!state.qteActive) return;
+        set({
+          qteActive: false,
+          playerEnergy: success ? Math.min(300, state.playerEnergy + 5) : Math.max(0, state.playerEnergy - 20),
+          status: success ? state.status : state.playerEnergy <= 20 ? 'game_over' : state.status,
+        });
       },
 
       movePlayer: (dx, dy) => {

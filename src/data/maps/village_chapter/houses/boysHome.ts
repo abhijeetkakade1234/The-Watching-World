@@ -37,7 +37,7 @@ export const boysHomeMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E ],
 ];
 
-import { DynamicEntity } from '@/types/game';
+import type { DynamicEntity } from '@/types/game';
 
 export const BOYS_HOME_SPAWN = { x: 7, y: 11 };
 export const BOYS_HOME_ENTITIES: DynamicEntity[] = [

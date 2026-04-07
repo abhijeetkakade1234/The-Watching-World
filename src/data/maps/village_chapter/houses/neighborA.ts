@@ -30,7 +30,7 @@ export const neighborAMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E ],
 ];
 
-import { DynamicEntity } from '@/types/game';
+import type { DynamicEntity } from '@/types/game';
 
 export const NEIGHBOR_A_SPAWN = { x: 5, y: 8 };
 export const NEIGHBOR_A_ENTITIES: DynamicEntity[] = [

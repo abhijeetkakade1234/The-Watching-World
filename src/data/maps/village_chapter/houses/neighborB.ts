@@ -31,7 +31,7 @@ export const neighborBMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E ],
 ];
 
-import { DynamicEntity } from '@/types/game';
+import type { DynamicEntity } from '@/types/game';
 
 export const NEIGHBOR_B_SPAWN = { x: 5, y: 8 };
 export const NEIGHBOR_B_ENTITIES: DynamicEntity[] = [

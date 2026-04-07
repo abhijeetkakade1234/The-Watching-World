@@ -22,11 +22,12 @@ export function MapViewport() {
   // Active map data
   const isHouse = currentMap.startsWith('house-');
   const house = HOUSE_MAPS[currentMap];
+  const hasValidHouseMap = isHouse && Boolean(house);
 
-  const activeCols = isHouse ? house.dims.cols : EXT_COLS;
-  const activeRows = isHouse ? house.dims.rows : EXT_ROWS;
-  const activeMap  = isHouse ? house.map : chapter1Map;
-  const activeDraw = isHouse ? drawInteriorTile : drawTile;
+  const activeCols = hasValidHouseMap ? house.dims.cols : EXT_COLS;
+  const activeRows = hasValidHouseMap ? house.dims.rows : EXT_ROWS;
+  const activeMap  = hasValidHouseMap ? house.map : chapter1Map;
+  const activeDraw = hasValidHouseMap ? drawInteriorTile : drawTile;
 
   const VIRTUAL_W = 500;
   const VIRTUAL_H = 350;
@@ -143,7 +144,7 @@ export function MapViewport() {
   const playerPy = playerPos.y * TILE_SIZE;
   const visPx    = visibilityRadius * TILE_SIZE;
 
-  const fogStyle = isHouse
+  const fogStyle = hasValidHouseMap
     ? `radial-gradient(circle ${visPx * 3}px at ${playerPx + 8}px ${playerPy + 8}px, transparent 100%, black 100%)`
     : `radial-gradient(circle ${visPx}px at ${playerPx + 8}px ${playerPy + 8}px, transparent 40%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.85) 100%)`;
 
@@ -151,7 +152,7 @@ export function MapViewport() {
     <div
       style={{
         position: 'fixed', inset: 0, overflow: 'hidden',
-        background: isHouse ? '#110c08' : '#0a1a05',
+        background: hasValidHouseMap ? '#110c08' : '#0a1a05',
         imageRendering: 'pixelated',
       }}
     >
@@ -169,9 +170,9 @@ export function MapViewport() {
           style={{
             position: 'absolute', inset: 0,
             pointerEvents: 'none',
-            maskImage: isHouse ? fogStyle : 'none',
-            WebkitMaskImage: isHouse ? fogStyle : 'none',
-            background: isHouse ? 'rgba(0,0,0,0.92)' : 'transparent',
+            maskImage: hasValidHouseMap ? fogStyle : 'none',
+            WebkitMaskImage: hasValidHouseMap ? fogStyle : 'none',
+            background: hasValidHouseMap ? 'rgba(0,0,0,0.92)' : 'transparent',
           }}
         />
 

@@ -8,7 +8,7 @@ import { chapter1Map } from './main';
 // Re-exporting consolidated data
 export { chapter1Map, TILES, TILE_PROPERTIES, SPAWN_POINT, EXIT_ZONE, CHAPTER_LABELS, COLS, ROWS };
 
-import { HouseData } from '@/types/game';
+import type { HouseData } from '@/types/game';
 
 // Explicitly import house data
 import { boysHomeMap, BOYS_HOME_SPAWN, BOYS_HOME_ENTITIES } from './houses/boysHome';
