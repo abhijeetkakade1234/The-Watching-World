@@ -1,0 +1,17 @@
+{
+  "name": "The Watching World",
+  "short_name": "Watching World",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b0f",
+  "theme_color": "#a8e060",
+  "description": "An atmospheric atmospheric exploration game set in the Watching World."
+}
