@@ -39,5 +39,6 @@ import type { DynamicEntity } from '@/types/game';
 
 export const INN_SPAWN = { x: 9, y: 13 };
 export const INN_ENTITIES: DynamicEntity[] = [
-  { id: 'chest-clue-inn', x: 2, y: 12, type: 'chest', message: "A regular's tab: 'They say the Watcher was once the village's guardian... until the corruption turned its eye towards us.'" }
+  { id: 'chest-clue-inn', x: 2, y: 12, type: 'chest', message: "A regular's tab: 'They say the Watcher was once the village's guardian... until the corruption turned its eye towards us.'" },
+  { id: 'bed-inn-1', x: 15, y: 2, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 }
 ];

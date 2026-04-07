@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 
+// Reserved for future chapters. Keep logic compiled but not mounted in Chapter 1 UI.
 export function GameLoop() {
   const {
     status,

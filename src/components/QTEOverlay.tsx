@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
+// Reserved for future chapters. Keep logic compiled but not mounted in Chapter 1 UI.
 export function QTEOverlay() {
   const { qteActive, resolveQTE } = useGameStore();
   const [taps, setTaps] = useState(0);

@@ -9,6 +9,9 @@ export interface DynamicEntity {
   isHidden?: boolean;
   message?: string;
   isOpened?: boolean;
+  sprite?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface HouseData {

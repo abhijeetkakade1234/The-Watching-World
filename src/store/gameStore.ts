@@ -245,6 +245,17 @@ export const useGameStore = create<GameState>()(
           const intProps = TILE_PROPERTIES_INT[intTile];
           if (intProps && !intProps.walkable) return;
 
+          // Multi-tile Entity Collision
+          const blockingEntity = state.entities.find(e => {
+            if (e.isHidden) return false;
+            const w = e.width || 1;
+            const h = e.height || 1;
+            return targetX >= e.x && targetX < e.x + w && targetY >= e.y && targetY < e.y + h;
+          });
+          if (blockingEntity && (blockingEntity.type === 'npc' || blockingEntity.type === 'block' || blockingEntity.type === 'chest')) {
+            return;
+          }
+
           const nearbyChest = state.entities.find(e => e.type === 'chest' && Math.abs(e.x - targetX) <= 1 && Math.abs(e.y - targetY) <= 1);
           set({ 
             playerPos: { x: targetX, y: targetY }, 
@@ -293,10 +304,19 @@ export const useGameStore = create<GameState>()(
         const props = TILE_PROPERTIES[tileType];
         if (!props?.walkable) return;
 
-        const entity = state.entities.find(e => e.x === targetX && e.y === targetY);
-        if (entity?.type === 'block') return;
+        // Multi-tile Entity Collision
+        const blockingEntity = state.entities.find(e => {
+          if (e.isHidden) return false;
+          const w = e.width || 1;
+          const h = e.height || 1;
+          return targetX >= e.x && targetX < e.x + w && targetY >= e.y && targetY < e.y + h;
+        });
+        
+        if (blockingEntity && (blockingEntity.type === 'npc' || blockingEntity.type === 'block' || blockingEntity.type === 'chest')) {
+          if (blockingEntity.type === 'block' || blockingEntity.type === 'npc' || blockingEntity.type === 'chest') return;
+        }
 
-        if (entity?.type === 'goal') {
+        if (blockingEntity?.type === 'goal') {
           set({ playerPos: { x: targetX, y: targetY }, status: 'victory' });
           return;
         }

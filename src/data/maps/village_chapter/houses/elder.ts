@@ -27,7 +27,7 @@ export const elderMap: number[][] = [
   [ E, W, SH, FL, RG, CH, TB, TB, TB, FL, FL, SH, W, E ],
   [ E, W, SH, FL, RG, FL, CH, TB, FL, FL, FL, SH, W, E ],
   [ E, W, FL, FL, RG, RG, RG, RG, RG, RG, FL, FL, W, E ],
-  [ E, W, FL, BD, BD, FL, FL, FL, SH, SH, FL, FL, W, E ],
+  [ E, W, FL, FL, FL, FL, FL, FL, SH, SH, FL, FL, W, E ],
   [ E, W, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, W, E ],
   [ E, W, W, W, W, W, DR, DR, W, W, W, W, W, W, E ],
   [ E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E ],
@@ -38,5 +38,6 @@ import type { DynamicEntity } from '@/types/game';
 export const ELDER_SPAWN = { x: 7, y: 10 };
 export const ELDER_ENTITIES: DynamicEntity[] = [
   { id: 'elder', x: 8, y: 3, type: 'npc', message: 'The Watchers are restless... proceed with caution, child.' },
-  { id: 'chest-map', x: 2, y: 8, type: 'chest', message: "You found the Village Map! The route is now clear. Press [M] to open map." }
+  { id: 'chest-map', x: 2, y: 8, type: 'chest', message: "You found the Village Map! The route is now clear. Press [M] to open map." },
+  { id: 'bed-elder', x: 3, y: 8, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 }
 ];

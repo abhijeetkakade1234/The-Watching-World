@@ -21,8 +21,8 @@ const DR = TILES_INT.DOOR;
 export const neighborBMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E ],
   [ E, W, W, W, W, W, W, W, W, W, W, E ],
-  [ E, W, WN, FL, FL, BD, BD, FL, WN, W, W, E ],
-  [ E, W, FL, FL, FL, BD, BD, FL, FL, W, W, E ],
+  [ E, W, WN, FL, FL, FL, FL, FL, WN, W, W, E ],
+  [ E, W, FL, FL, FL, FL, FL, FL, FL, W, W, E ],
   [ E, W, SH, FL, FL, FL, FL, FL, FL, FL, W, E ],
   [ E, W, FL, RG, RG, RG, FL, TB, TB, FL, W, E ],
   [ E, W, FL, RG, RG, RG, FL, FL, FL, FL, W, E ],
@@ -36,5 +36,6 @@ import type { DynamicEntity } from '@/types/game';
 export const NEIGHBOR_B_SPAWN = { x: 5, y: 8 };
 export const NEIGHBOR_B_ENTITIES: DynamicEntity[] = [
   { id: 'neighbor-b', x: 8, y: 4, type: 'npc', message: 'The Innkeeper has the best cider, but he talks too much.' },
-  { id: 'chest-clue-b', x: 2, y: 4, type: 'chest', message: "A letter found: 'The soil is changing. Even the plants seem afraid to grow towards the sky...'" }
+  { id: 'chest-clue-b', x: 2, y: 4, type: 'chest', message: "A letter found: 'The soil is changing. Even the plants seem afraid to grow towards the sky...'" },
+  { id: 'bed-b', x: 5, y: 2, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 }
 ];

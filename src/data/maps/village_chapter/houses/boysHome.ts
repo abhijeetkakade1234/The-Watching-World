@@ -23,8 +23,8 @@ const CH = TILES_INT.CHAIR;
 export const boysHomeMap: number[][] = [
   [ E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E ],
   [ E, W, W, W, W, W, W, W, W, W, W, W, W, W, W, E ],
-  [ E, W, WN, WN, FL, BD, BD, FL, FL, BD, BD, WN, WN, W, W, E ],
-  [ E, W, FL, FL, FL, BD, BD, FL, FL, BD, BD, FL, FL, W, W, E ],
+  [ E, W, WN, WN, FL, FL, FL, FL, FL, FL, FL, WN, WN, W, W, E ],
+  [ E, W, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, W, W, E ],
   [ E, W, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, W, E ],
   [ E, W, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, W, E ],
   [ E, W, SH, FL, FL, RG, RG, RG, FL, FL, TB, TB, FL, FL, W, E ],
@@ -41,6 +41,7 @@ import type { DynamicEntity } from '@/types/game';
 
 export const BOYS_HOME_SPAWN = { x: 7, y: 11 };
 export const BOYS_HOME_ENTITIES: DynamicEntity[] = [
-  { id: 'grandma', x: 5, y: 2, type: 'npc', message: 'im not feeling well..' },
+  { id: 'grandma', x: 5, y: 2, type: 'npc', message: 'im not feeling well..', sprite: '/characters/grandma.png', width: 2, height: 2 },
+  { id: 'bed-home-2', x: 9, y: 2, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 },
   { id: 'chest-cure', x: 2, y: 3, type: 'chest', message: "The grandmother's strength fades. Only the Eternal Glimmer from the deep forest can restore her spirit..." }
 ];

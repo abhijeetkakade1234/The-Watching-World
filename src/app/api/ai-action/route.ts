@@ -4,13 +4,29 @@ import { getDb, type Env } from '@/db';
 import { actions, sessions } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import {
+  aiActionDecisionSchema,
+  aiActionRequestSchema,
+  type AiActionDecision,
+} from '@/types/api';
 
 export const runtime = 'edge';
 
+const FALLBACK_AI_DECISION: AiActionDecision = {
+  narration: 'The Watcher waits in the silence.',
+  trapFrequencyMs: 5000,
+  attackType: 'none',
+};
+
 export async function POST(req: NextRequest) {
   try {
-    const context = getRequestContext();
-    const env = (context?.env || process.env) as Env;
+    let env: Env;
+    try {
+      const context = getRequestContext();
+      env = (context?.env || process.env) as Env;
+    } catch {
+      env = process.env as Env;
+    }
     
     const apiKey = env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -19,18 +35,15 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { sessionId, playerX, playerY, _playerEnergy, _playerHunger, currentMap } = body;
-    if (
-      typeof sessionId !== 'string' ||
-      typeof playerX !== 'number' ||
-      typeof playerY !== 'number'
-    ) {
+    const parsed = aiActionRequestSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
     }
+    const { sessionId, playerX, playerY, playerEnergy, playerHunger, currentMap } = parsed.data;
 
-    let historySummary = "Game just started.";
-    let _qteSuccess = 0;
-    let _qteFail = 0;
+    let historySummary = 'Game just started.';
+    let qteSuccess = 0;
+    let qteFail = 0;
 
     // Only try to access DB if we have a real DB binding (Cloudflare production or local wrangler)
     if (env.DB) {
@@ -47,19 +60,22 @@ export async function POST(req: NextRequest) {
         }).join('\n');
 
         const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
-        _qteSuccess = session?.qteSuccessCount || 0;
-        _qteFail = session?.qteFailCount || 0;
+        qteSuccess = session?.qteSuccessCount || 0;
+        qteFail = session?.qteFailCount || 0;
       } catch (e) {
         console.error('Database access failed, falling back to mock history.', e);
       }
     }
 
-    let _sector = 1;
-    let _unlockedPowers = "Basic Traps";
-    if (playerX > 40) { _sector = 2; _unlockedPowers = "Basic Traps + Corruption"; }
-    if (playerX > 80) { _sector = 3; _unlockedPowers = "Traps + Corruption + Terrain Blocking"; }
+    let sector = 1;
+    let unlockedPowers = 'Basic Traps';
+    if (playerX > 40) { sector = 2; unlockedPowers = 'Basic Traps + Corruption'; }
+    if (playerX > 80) { sector = 3; unlockedPowers = 'Traps + Corruption + Terrain Blocking'; }
 
     const isExploration = currentMap === 'village_chapter' || currentMap?.startsWith('house-');
+    if (!apiKey) {
+      return NextResponse.json(FALLBACK_AI_DECISION);
+    }
 
     const ai = new GoogleGenAI({ apiKey });
     
@@ -70,7 +86,11 @@ export async function POST(req: NextRequest) {
       - Map: ${currentMap}.
       - Mode: ${isExploration ? 'EXPLORATION (ATTACKS DISABLED)' : 'SURVIVAL (ACTIVE ATTACK)'}.
       - Player Location: (${playerX}, ${playerY}).
-      - History: ${historySummary || "Game just started."}
+      - Player Stats: Energy=${playerEnergy ?? 'unknown'}, Hunger=${playerHunger ?? 'unknown'}.
+      - Session Stats: QTE Success=${qteSuccess}, QTE Fail=${qteFail}.
+      - Sector Estimate: ${sector}.
+      - Unlocked Powers: ${unlockedPowers}.
+      - History: ${historySummary || 'Game just started.'}
       
       YOUR GOAL:
       1. Narrate the player's struggle in a creepy, "Final Boss" voice.
@@ -84,16 +104,26 @@ export async function POST(req: NextRequest) {
       }
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemma-3-27b-it',
-      contents: systemPrompt,
-      config: { temperature: 0.8, responseMimeType: 'application/json' }
-    });
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemma-3-27b-it',
+        contents: systemPrompt,
+        config: { temperature: 0.8, responseMimeType: 'application/json' }
+      });
 
-    const resText = response.text || "{}";
-    const aiDecision = JSON.parse(resText);
+      const resText = response.text || '{}';
+      const parsedDecision = JSON.parse(resText);
 
-    return NextResponse.json(aiDecision);
+      const validatedDecision = aiActionDecisionSchema.safeParse(parsedDecision);
+      if (!validatedDecision.success) {
+        return NextResponse.json(FALLBACK_AI_DECISION);
+      }
+
+      return NextResponse.json(validatedDecision.data);
+    } catch (aiErr: unknown) {
+      console.error('AI generation failed, using fallback response.', aiErr);
+      return NextResponse.json(FALLBACK_AI_DECISION);
+    }
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('AI Error:', errorMsg);

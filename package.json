@@ -4,10 +4,10 @@
   "private": true,
   "packageManager": "npm@10.9.2",
   "scripts": {
-    "dev": "next dev",
-    "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && npm run lint && next build --no-lint",
-    "start": "next start",
+    "dev": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev",
+    "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
+    "build": "npm run typecheck && npm run lint && node --max-old-space-size=4096 ./node_modules/next/dist/bin/next build --no-lint",
+    "start": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next start",
     "lint": "eslint .",
     "prepare": "husky"
   },
@@ -17,6 +17,7 @@
     "next": "15.4.11",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "zod": "^3.25.76",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

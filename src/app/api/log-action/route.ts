@@ -3,21 +3,32 @@ import { getDb, type Env } from '@/db';
 import { actions, sessions } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { LOG_ACTION, logActionRequestSchema, logActionResponseSchema } from '@/types/api';
 
 export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const context = getRequestContext();
-    const env = (context?.env || process.env) as Env;
+    const body = await req.json();
+    const parsed = logActionRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
+    }
+    const { sessionId, actionType, x, y, details } = parsed.data;
+
+    let env: Env;
+    try {
+      const context = getRequestContext();
+      env = (context?.env || process.env) as Env;
+    } catch {
+      env = process.env as Env;
+    }
     
     // In local dev without D1, we just return success
     if (!env.DB) {
       console.warn('D1 Database [DB] binding is missing, Skipping log per local development.');
       return NextResponse.json({ success: true, local: true });
     }
-
-    const { sessionId, actionType, x, y, details } = await req.json();
     const db = getDb(env);
 
     // 1. Ensure session exists
@@ -38,24 +49,24 @@ export async function POST(req: NextRequest) {
       id: crypto.randomUUID(),
       sessionId,
       actionType,
-      posX: x,
-      posY: y,
+      posX: x ?? null,
+      posY: y ?? null,
       timestamp: Date.now(),
       details: details ? JSON.stringify(details) : null
     });
 
     // 3. Update Session Stats if QTE
-    if (actionType === 'QTE_SUCCESS') {
+    if (actionType === LOG_ACTION.QTE_SUCCESS) {
       await db.update(sessions)
         .set({ qteSuccessCount: sql`${sessions.qteSuccessCount} + 1` })
         .where(eq(sessions.id, sessionId));
-    } else if (actionType === 'QTE_FAIL') {
+    } else if (actionType === LOG_ACTION.QTE_FAIL) {
       await db.update(sessions)
         .set({ qteFailCount: sql`${sessions.qteFailCount} + 1` })
         .where(eq(sessions.id, sessionId));
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(logActionResponseSchema.parse({ success: true }));
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('Log Error:', errorMsg);

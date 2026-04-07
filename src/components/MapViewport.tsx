@@ -192,14 +192,26 @@ export function MapViewport() {
               key={entity.id}
               style={{
                 position: 'absolute', left: ex, top: ey,
-                width: TILE_SIZE, height: TILE_SIZE,
-                background: colors[entity.type] ?? '#fff',
-                borderRadius: entity.type === 'npc' ? '50%' : 2,
-                boxShadow: `0 0 10px ${colors[entity.type] ?? '#fff'}`,
-                opacity: 0.9,
+                width: (entity.width || 1) * TILE_SIZE, 
+                height: (entity.height || 1) * TILE_SIZE,
+                background: entity.sprite ? 'transparent' : (colors[entity.type] ?? '#fff'),
+                borderRadius: entity.type === 'npc' && !entity.sprite ? '50%' : 2,
+                boxShadow: entity.sprite ? 'none' : `0 0 10px ${colors[entity.type] ?? '#fff'}`,
+                opacity: 1.0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                imageRendering: 'pixelated',
+                zIndex: 5,
               }}
             >
-               {entity.type === 'chest' && <div className="absolute inset-1 border border-black/30" />}
+               {entity.sprite ? (
+                 <img 
+                   src={entity.sprite} 
+                   alt={entity.id} 
+                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                 />
+               ) : (
+                 entity.type === 'chest' && <div className="absolute inset-1 border border-black/30" />
+               )}
             </div>
           );
         })}
