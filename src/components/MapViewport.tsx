@@ -2,11 +2,52 @@
 
 import { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { 
-  chapter1Map, COLS as EXT_COLS, ROWS as EXT_ROWS, 
-  HOUSE_MAPS 
+import {
+  chapter1Map, COLS as EXT_COLS, ROWS as EXT_ROWS,
+  HOUSE_MAPS
 } from '../data/maps/village_chapter/index';
 import { drawTile, drawInteriorTile, TILE_SIZE } from '../utils/tile_renderer';
+
+type Facing = 'up' | 'down' | 'left' | 'right';
+
+const PLAYER_FRAMES: Record<Facing, string[]> = {
+  up: [
+    '/characters/boy/leo_up_0.png',
+    '/characters/boy/leo_up_1.png',
+    '/characters/boy/leo_up_2.png',
+    '/characters/boy/leo_up_3.png',
+    '/characters/boy/leo_up_4.png',
+    '/characters/boy/leo_up_5.png',
+  ],
+  down: [
+    '/characters/boy/leo_down_0.png',
+    '/characters/boy/leo_down_1.png',
+    '/characters/boy/leo_down_2.png',
+    '/characters/boy/leo_down_3.png',
+    '/characters/boy/leo_down_4.png',
+    '/characters/boy/leo_down_5.png',
+    '/characters/boy/leo_down_6.png',
+
+  ],
+  left: [
+    '/characters/boy/leo_left_0.png',
+    '/characters/boy/leo_left_1.png',
+    '/characters/boy/leo_left_2.png',
+    '/characters/boy/leo_left_3.png',
+  ],
+  right: [
+    '/characters/boy/leo_right_0.png',
+    '/characters/boy/leo_right_1.png',
+    '/characters/boy/leo_right_2.png',
+    '/characters/boy/leo_right_3.png',
+    '/characters/boy/leo_right_4.png',
+    '/characters/boy/leo_right_5.png',
+    '/characters/boy/leo_right_6.png',
+  ],
+};
+
+const MOVE_INTERVAL_MS = 140;
+const PLAYER_SCALE = 1.45;
 
 export function MapViewport() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,6 +59,9 @@ export function MapViewport() {
   } = useGameStore();
 
   const [scale, setScale] = useState(1);
+  const [facing, setFacing] = useState<Facing>('down');
+  const [walkFrame, setWalkFrame] = useState(0);
+  const lastMoveAtRef = useRef(0);
 
   // Active map data
   const isHouse = currentMap.startsWith('house-');
@@ -26,7 +70,7 @@ export function MapViewport() {
 
   const activeCols = hasValidHouseMap ? house.dims.cols : EXT_COLS;
   const activeRows = hasValidHouseMap ? house.dims.rows : EXT_ROWS;
-  const activeMap  = hasValidHouseMap ? house.map : chapter1Map;
+  const activeMap = hasValidHouseMap ? house.map : chapter1Map;
   const activeDraw = hasValidHouseMap ? drawInteriorTile : drawTile;
 
   const VIRTUAL_W = 500;
@@ -45,7 +89,7 @@ export function MapViewport() {
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    canvasRef.current.width  = activeCols * TILE_SIZE;
+    canvasRef.current.width = activeCols * TILE_SIZE;
     canvasRef.current.height = activeRows * TILE_SIZE;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -93,7 +137,7 @@ export function MapViewport() {
       // 2. Interaction (Triggered ONLY by 'E')
       if (key === 'e' && interactionMessage && !interactingEntityId) {
         const { x, y } = playerPos;
-        const chestOrSign = entities.find(e => 
+        const chestOrSign = entities.find(e =>
           (e.type === 'chest' || e.type === 'npc') && Math.abs(e.x - x) <= 1 && Math.abs(e.y - y) <= 1
         ) || interactionMessage.includes('['); // For signs which are baked into map
 
@@ -107,11 +151,30 @@ export function MapViewport() {
 
       // 3. Movement (Always processed if not interacting)
       if (isMovementKey) {
+        const now = performance.now();
+        if (now - lastMoveAtRef.current < MOVE_INTERVAL_MS) return;
+        lastMoveAtRef.current = now;
+
+        const moveWithStepAnimation = (dx: number, dy: number, nextFacing: Facing) => {
+          setFacing(nextFacing);
+
+          const before = useGameStore.getState().playerPos;
+          movePlayer(dx, dy);
+          const after = useGameStore.getState().playerPos;
+          const moved = before.x !== after.x || before.y !== after.y;
+
+          if (moved) {
+            setWalkFrame(prev => (prev + 1) % PLAYER_FRAMES[nextFacing].length);
+          } else {
+            setWalkFrame(0);
+          }
+        };
+
         switch (key) {
-          case 'arrowup':    case 'w': movePlayer(0, -1); break;
-          case 'arrowdown':  case 's': movePlayer(0, 1);  break;
-          case 'arrowleft':  case 'a': movePlayer(-1, 0); break;
-          case 'arrowright': case 'd': movePlayer(1, 0);  break;
+          case 'arrowup': case 'w': moveWithStepAnimation(0, -1, 'up'); break;
+          case 'arrowdown': case 's': moveWithStepAnimation(0, 1, 'down'); break;
+          case 'arrowleft': case 'a': moveWithStepAnimation(-1, 0, 'left'); break;
+          case 'arrowright': case 'd': moveWithStepAnimation(1, 0, 'right'); break;
         }
       }
     };
@@ -123,17 +186,17 @@ export function MapViewport() {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
-       window.removeEventListener('keydown', handleKeyDown);
-       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [status, movePlayer, togglePause, toggleMap, interact, interactionMessage, entities, playerPos, interactingEntityId, startInteracting, stopInteracting]);
 
-  const widthStr  = `${activeCols * TILE_SIZE}px`;
+  const widthStr = `${activeCols * TILE_SIZE}px`;
   const heightStr = `${activeRows * TILE_SIZE}px`;
 
   let centerX = (windowSize.w / 2) / scale - (playerPos.x * TILE_SIZE + TILE_SIZE / 2);
   let centerY = (windowSize.h / 2) / scale - (playerPos.y * TILE_SIZE + TILE_SIZE / 2);
-  
+
   const minTx = (windowSize.w / scale) - (activeCols * TILE_SIZE);
   const minTy = (windowSize.h / scale) - (activeRows * TILE_SIZE);
 
@@ -142,7 +205,10 @@ export function MapViewport() {
 
   const playerPx = playerPos.x * TILE_SIZE;
   const playerPy = playerPos.y * TILE_SIZE;
-  const visPx    = visibilityRadius * TILE_SIZE;
+  const visPx = visibilityRadius * TILE_SIZE;
+  const playerFrame = PLAYER_FRAMES[facing][walkFrame];
+  const playerSize = Math.round(TILE_SIZE * PLAYER_SCALE);
+  const playerOffset = Math.floor((playerSize - TILE_SIZE) / 2);
 
   const fogStyle = hasValidHouseMap
     ? `radial-gradient(circle ${visPx * 3}px at ${playerPx + 8}px ${playerPy + 8}px, transparent 100%, black 100%)`
@@ -183,16 +249,16 @@ export function MapViewport() {
           const ey = entity.y * TILE_SIZE;
           const colors: Record<string, string> = {
             chest: entity.isOpened ? '#ca8a04' : '#facc15',
-            npc:   '#fb7185',
-            goal:  '#34d399',
+            npc: '#fb7185',
+            goal: '#34d399',
           };
-          
+
           return (
             <div
               key={entity.id}
               style={{
                 position: 'absolute', left: ex, top: ey,
-                width: (entity.width || 1) * TILE_SIZE, 
+                width: (entity.width || 1) * TILE_SIZE,
                 height: (entity.height || 1) * TILE_SIZE,
                 background: entity.sprite ? 'transparent' : (colors[entity.type] ?? '#fff'),
                 borderRadius: entity.type === 'npc' && !entity.sprite ? '50%' : 2,
@@ -200,19 +266,19 @@ export function MapViewport() {
                 opacity: 1.0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 imageRendering: 'pixelated',
-               zIndex: 5,
+                zIndex: 5,
               }}
             >
-               {entity.sprite ? (
-                 // eslint-disable-next-line @next/next/no-img-element -- Pixel sprites are intentionally rendered in a canvas-like overlay.
-                 <img 
-                   src={entity.sprite} 
-                   alt={entity.id} 
-                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                 />
-               ) : (
-                 entity.type === 'chest' && <div className="absolute inset-1 border border-black/30" />
-               )}
+              {entity.sprite ? (
+                // eslint-disable-next-line @next/next/no-img-element -- Pixel sprites are intentionally rendered in a canvas-like overlay.
+                <img
+                  src={entity.sprite}
+                  alt={entity.id}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              ) : (
+                entity.type === 'chest' && <div className="absolute inset-1 border border-black/30" />
+              )}
             </div>
           );
         })}
@@ -222,11 +288,9 @@ export function MapViewport() {
         <div
           style={{
             position: 'absolute',
-            left: playerPx + 1, top: playerPy + 1,
-            width: 14, height: 14,
+            left: playerPx - playerOffset, top: playerPy - playerOffset,
+            width: playerSize, height: playerSize,
             background: 'transparent',
-            borderRadius: '50%',
-            border: '2px solid rgba(255,255,255,0.1)',
             transition: 'left 0.1s linear, top 0.1s linear',
             zIndex: 10,
           }}
@@ -241,17 +305,28 @@ export function MapViewport() {
               />
             </svg>
           )}
-          
+
           <div
             style={{
               position: 'absolute',
-              left: 2, top: 2,
-              width: 10, height: 10,
-              background: '#38bdf8',
-              borderRadius: '50%',
-              boxShadow: '0 0 15px #0ea5e9',
+              left: 0, top: 0,
+              width: '100%', height: '100%',
+              imageRendering: 'pixelated',
             }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- Pixel sprite animation needs direct frame swapping without optimization transforms. */}
+            <img
+              src={playerFrame}
+              alt="Player"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                imageRendering: 'pixelated',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
