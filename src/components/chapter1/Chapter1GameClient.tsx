@@ -34,19 +34,26 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
   const syncRouteMap = useGameStore((s) => s.syncRouteMap);
   const setMapTransitioning = useGameStore((s) => s.setMapTransitioning);
   const lastPushedRouteRef = useRef<string | null>(null);
-  const [showBootLoader, setShowBootLoader] = useState(() => {
+  const didInitialRouteCheckRef = useRef(false);
+  const [showBootLoader, setShowBootLoader] = useState(true);
+  const transitionMessage = useMemo(() => transitionLabel(currentMap), [currentMap]);
+
+  useEffect(() => {
+    let hideTimeout: number | undefined;
     try {
       const isInternalTransition = sessionStorage.getItem(INTERNAL_TRANSITION_KEY) === '1';
       if (isInternalTransition) {
         sessionStorage.removeItem(INTERNAL_TRANSITION_KEY);
-        return false;
+        hideTimeout = window.setTimeout(() => setShowBootLoader(false), 0);
       }
-      return true;
     } catch {
-      return true;
+      // Keep boot loader visible when storage is unavailable.
     }
-  });
-  const transitionMessage = useMemo(() => transitionLabel(currentMap), [currentMap]);
+
+    return () => {
+      if (hideTimeout) window.clearTimeout(hideTimeout);
+    };
+  }, []);
 
   useEffect(() => {
     syncRouteMap(routeMapId);
@@ -55,6 +62,14 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
   }, [routeMapId, syncRouteMap, setMapTransitioning]);
 
   useEffect(() => {
+    const expectedRoute = chapter1RouteForMap(routeMapId);
+
+    // First client pass only: avoid hydration mismatch reroute from stale persisted map state.
+    if (!didInitialRouteCheckRef.current) {
+      didInitialRouteCheckRef.current = true;
+      if (pathname === expectedRoute && currentMap !== routeMapId) return;
+    }
+
     const targetRoute = chapter1RouteForMap(currentMap);
     if (targetRoute === pathname) {
       return;
@@ -72,7 +87,7 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
       // no-op: transition still proceeds even if storage is unavailable.
     }
     router.replace(targetRoute);
-  }, [currentMap, pathname, router, setMapTransitioning]);
+  }, [currentMap, pathname, routeMapId, router, setMapTransitioning]);
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-slate-100 font-sans">
