@@ -7,6 +7,7 @@ import {
   HOUSE_MAPS
 } from '../data/maps/village_chapter/index';
 import { drawTile, drawInteriorTile, TILE_SIZE } from '../utils/tile_renderer';
+import { isEntityWithinRange } from '@/utils/entityInteraction';
 
 type Facing = 'up' | 'down' | 'left' | 'right';
 
@@ -55,7 +56,8 @@ export function MapViewport() {
     playerPos, entities, status, currentMap,
     movePlayer, initializeGame, togglePause, visibilityRadius,
     toggleMap, interact, interactionMessage, interactionProgress,
-    startInteracting, stopInteracting, tickInteraction, interactingEntityId
+    startInteracting, stopInteracting, tickInteraction, interactingEntityId,
+    startFinnDialogue, isDialogueActive
   } = useGameStore();
 
   const [scale, setScale] = useState(1);
@@ -131,21 +133,34 @@ export function MapViewport() {
       if (key === 'm') { toggleMap(); return; }
 
       if (status !== 'playing') return;
+      if (isDialogueActive) return;
 
       const isMovementKey = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key);
 
       // 2. Interaction (Triggered ONLY by 'E')
-      if (key === 'e' && interactionMessage && !interactingEntityId) {
+      if (key === 'e' && !interactingEntityId) {
         const { x, y } = playerPos;
-        const chestOrSign = entities.find(e =>
-          (e.type === 'chest' || e.type === 'npc') && Math.abs(e.x - x) <= 1 && Math.abs(e.y - y) <= 1
-        ) || interactionMessage.includes('['); // For signs which are baked into map
+        const nearbyEntity = entities.find(
+          (e) => (e.type === 'chest' || e.type === 'npc') && isEntityWithinRange(e, x, y, 1)
+        );
 
-        if (chestOrSign || interactionMessage) {
-          const entityToUse = (typeof chestOrSign === 'object') ? chestOrSign : { id: 'sign', isOpened: true };
-          // Always use startInteracting to match user's "(Hold E to Re-Read)" requirement
-          startInteracting(entityToUse.id);
+        if (nearbyEntity?.type === 'npc' && currentMap === 'house-neighborA') {
+          const baseId = nearbyEntity.id.startsWith('temp-') ? nearbyEntity.id.slice(5) : nearbyEntity.id;
+          if (baseId === 'finn') {
+            startFinnDialogue();
+            return;
+          }
+        }
+
+        if (nearbyEntity?.type === 'chest') {
+          startInteracting(nearbyEntity.id);
           return; // Interacting blocks movement for that frame
+        }
+
+        if (interactionMessage?.includes('[')) {
+          const entityToUse = { id: 'sign', isOpened: true };
+          startInteracting(entityToUse.id);
+          return;
         }
       }
 
@@ -189,7 +204,7 @@ export function MapViewport() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [status, movePlayer, togglePause, toggleMap, interact, interactionMessage, entities, playerPos, interactingEntityId, startInteracting, stopInteracting]);
+  }, [status, isDialogueActive, movePlayer, togglePause, toggleMap, interact, interactionMessage, entities, playerPos, interactingEntityId, startInteracting, stopInteracting, startFinnDialogue, currentMap]);
 
   const widthStr = `${activeCols * TILE_SIZE}px`;
   const heightStr = `${activeRows * TILE_SIZE}px`;
@@ -245,6 +260,7 @@ export function MapViewport() {
         {/* Dynamic Entities (NPCs, Chests, etc) */}
         {entities.map(entity => {
           if (entity.isHidden) return null;
+          if (entity.type === 'goal') return null;
           const ex = entity.x * TILE_SIZE;
           const ey = entity.y * TILE_SIZE;
           const colors: Record<string, string> = {
@@ -273,7 +289,10 @@ export function MapViewport() {
                 // eslint-disable-next-line @next/next/no-img-element -- Pixel sprites are intentionally rendered in a canvas-like overlay.
                 <img
                   src={entity.sprite}
-                  alt={entity.id}
+                  alt=""
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none';
+                  }}
                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 />
               ) : (

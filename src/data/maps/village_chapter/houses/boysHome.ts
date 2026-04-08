@@ -42,5 +42,5 @@ export const BOYS_HOME_SPAWN = { x: 7, y: 11 };
 export const BOYS_HOME_ENTITIES: DynamicEntity[] = [
   { id: 'grandma', x: 5, y: 2, type: 'npc', message: 'im not feeling well..', sprite: '/characters/grandma.png', width: 2, height: 2 },
   { id: 'bed-home-2', x: 9, y: 2, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 },
-  { id: 'chest-cure', x: 2, y: 3, type: 'chest', message: "The grandmother's strength fades. Only the Eternal Glimmer from the deep forest can restore her spirit..." }
+  { id: 'chest-cure', x: 2, y: 3, type: 'chest', message: "The grandmother's strength fades. Only the Heart of Aether 💠 from the forbidden shrine can restore her spirit..." }
 ];

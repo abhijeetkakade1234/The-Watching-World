@@ -1,11 +1,34 @@
 'use client';
 
+import { usePathname, useRouter } from 'next/navigation';
 import { useGameStore } from '../store/gameStore';
 
 export function PauseOverlay() {
-  const { status, togglePause, initializeGame } = useGameStore();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { status, togglePause, restartChapter, isMusicEnabled, toggleMusic } = useGameStore();
 
   if (status !== 'paused') return null;
+
+  const handleRestart = () => {
+    const segments = pathname.split('/').filter(Boolean);
+    const chapterSlug = segments[0]?.startsWith('chapter') ? segments[0] : null;
+
+    if (chapterSlug === 'chapter1') {
+      restartChapter('chapter1');
+      router.replace('/chapter1/village');
+      return;
+    }
+
+    if (chapterSlug) {
+      restartChapter(chapterSlug);
+      router.replace(`/${chapterSlug}`);
+      return;
+    }
+
+    restartChapter('chapter1');
+    router.replace('/chapter1/village');
+  };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md transition-all duration-300">
@@ -21,9 +44,7 @@ export function PauseOverlay() {
           </button>
           
           <button 
-            onClick={() => {
-              initializeGame();
-            }}
+            onClick={handleRestart}
             className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-all border border-slate-700"
           >
             RESTART
@@ -33,6 +54,13 @@ export function PauseOverlay() {
             className="w-full py-4 bg-slate-800/50 text-slate-500 font-bold rounded-lg cursor-not-allowed border border-slate-800"
           >
             SETTINGS
+          </button>
+
+          <button
+            onClick={toggleMusic}
+            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-all border border-slate-700"
+          >
+            MUSIC: {isMusicEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
 

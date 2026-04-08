@@ -5,11 +5,16 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MapViewport } from '@/components/MapViewport';
 import { MiniMap } from '@/components/MiniMap';
 import { InteractionOverlay } from '@/components/InteractionOverlay';
+import { PauseOverlay } from '@/components/PauseOverlay';
+import { ChapterObjectivePanel } from '@/components/chapter1/ChapterObjectivePanel';
+import { Chapter1Music } from '@/components/chapter1/Chapter1Music';
 import { ChapterLoader } from '@/components/ChapterLoader';
+import { chapter1ObjectiveContent } from '@/chapters/chapter1/objectives';
 import { chapter1RouteForMap } from '@/chapters/chapter1/routes';
 import { useGameStore } from '@/store/gameStore';
 import { CHAPTER1_INTERNAL_TRANSITION_KEY, CHAPTER1_SKIP_BOOT_ONCE_KEY } from '@/utils/navigationSessionKeys';
 import type { MapId } from '@/types/game';
+import type { ObjectivePanelContent } from '@/types/objectives';
 
 interface Chapter1GameClientProps {
   routeMapId: MapId;
@@ -29,6 +34,16 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const currentMap = useGameStore((s) => s.currentMap);
+  const status = useGameStore((s) => s.status);
+  const chapter1ObjectiveStage = useGameStore((s) => s.chapter1ObjectiveStage || 'find_finn_house');
+  const chapter1PreparationProgress = useGameStore(
+    (s) =>
+      s.chapter1PreparationProgress || {
+        visitedLyraAbode: false,
+        visitedVillageInn: false,
+        visitedElderKael: false,
+      }
+  );
   const isMapTransitioning = useGameStore((s) => s.isMapTransitioning);
   const syncRouteMap = useGameStore((s) => s.syncRouteMap);
   const setMapTransitioning = useGameStore((s) => s.setMapTransitioning);
@@ -36,6 +51,10 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
   const didInitialRouteCheckRef = useRef(false);
   const [showBootLoader, setShowBootLoader] = useState(true);
   const transitionMessage = useMemo(() => transitionLabel(currentMap), [currentMap]);
+  const objectivePanelContent = useMemo<ObjectivePanelContent | null>(
+    () => chapter1ObjectiveContent(chapter1ObjectiveStage, chapter1PreparationProgress),
+    [chapter1ObjectiveStage, chapter1PreparationProgress]
+  );
 
   useEffect(() => {
     let hideTimeout: number | undefined;
@@ -95,9 +114,20 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
     router.replace(targetRoute);
   }, [currentMap, pathname, routeMapId, router, setMapTransitioning]);
 
+  useEffect(() => {
+    if (status !== 'victory') return;
+    const timeout = window.setTimeout(() => {
+      router.replace('/chapter2');
+    }, 1700);
+    return () => window.clearTimeout(timeout);
+  }, [status, router]);
+
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black text-slate-100 font-sans">
+      <Chapter1Music />
       <InteractionOverlay />
+      <PauseOverlay />
+      <ChapterObjectivePanel content={objectivePanelContent} />
       <MiniMap />
       <div id="game-container" className="z-0 h-full w-full">
         <MapViewport />
@@ -111,6 +141,9 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
       )}
       {!showBootLoader && isMapTransitioning && (
         <ChapterLoader variant="transition" message={transitionMessage} />
+      )}
+      {!showBootLoader && status === 'victory' && (
+        <ChapterLoader variant="transition" message="ENTERING CHAPTER 2" />
       )}
     </main>
   );
