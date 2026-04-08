@@ -33,6 +33,15 @@ import type { DynamicEntity } from '@/types/game';
 
 export const NEIGHBOR_A_SPAWN = { x: 5, y: 8 };
 export const NEIGHBOR_A_ENTITIES: DynamicEntity[] = [
-  { id: 'neighbor-a', x: 3, y: 3, type: 'npc', message: 'Have you seen the strange lights in the southern woods?' },
+  {
+    id: 'finn',
+    x: 2,
+    y: 2,
+    type: 'npc',
+    sprite: '/characters/finn.png',
+    width: 2,
+    height: 2,
+    message: 'Have you seen the strange lights in the southern woods?',
+  },
   { id: 'bed-a', x: 5, y: 2, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 }
 ];
