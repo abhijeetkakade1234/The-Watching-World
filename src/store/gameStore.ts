@@ -361,13 +361,13 @@ export const useGameStore = create<GameState>()(
 
           // New Precise Coordinate Mapping (Synced with main.ts)
           if (targetY === 28 && (targetX === 32 || targetX === 33)) { 
-             houseId = 'house-boysHome'; houseName = "Your Home";
+             houseId = 'house-boysHome'; houseName = "Our Home";
           } else if (targetY === 8 && (targetX === 27 || targetX === 28)) { 
-             houseId = 'house-elder'; houseName = "Elder's House";
+             houseId = 'house-elder'; houseName = "Elder Kael's Hall";
           } else if (targetY === 21 && (targetX === 7 || targetX === 8)) { 
-             houseId = 'house-neighborA'; houseName = "Neighbor's House";
+             houseId = 'house-neighborA'; houseName = "Finn's Cottage";
           } else if (targetY === 43 && (targetX === 12 || targetX === 13)) { 
-             houseId = 'house-neighborB'; houseName = "Neighbor's House";
+             houseId = 'house-neighborB'; houseName = "Lyra's Abode";
           } else if (targetY === 15 && (targetX === 41 || targetX === 42)) { 
              houseId = 'house-inn'; houseName = "The Village Inn";
           }

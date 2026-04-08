@@ -8,20 +8,19 @@ import { InteractionOverlay } from '@/components/InteractionOverlay';
 import { ChapterLoader } from '@/components/ChapterLoader';
 import { chapter1RouteForMap } from '@/chapters/chapter1/routes';
 import { useGameStore } from '@/store/gameStore';
+import { CHAPTER1_INTERNAL_TRANSITION_KEY, CHAPTER1_SKIP_BOOT_ONCE_KEY } from '@/utils/navigationSessionKeys';
 import type { MapId } from '@/types/game';
 
 interface Chapter1GameClientProps {
   routeMapId: MapId;
 }
 
-const INTERNAL_TRANSITION_KEY = 'chapter1_internal_transition';
-
 function transitionLabel(mapId: MapId): string {
   if (mapId === 'village_chapter') return 'RETURNING TO VILLAGE';
-  if (mapId === 'house-boysHome') return 'ENTERING YOUR HOME';
-  if (mapId === 'house-elder') return "ENTERING ELDER'S HOUSE";
-  if (mapId === 'house-neighborA') return "ENTERING NEIGHBOR'S HOUSE";
-  if (mapId === 'house-neighborB') return "ENTERING NEIGHBOR'S HOUSE";
+  if (mapId === 'house-boysHome') return 'ENTERING OUR HOME';
+  if (mapId === 'house-elder') return "ENTERING ELDER KAEL'S HALL";
+  if (mapId === 'house-neighborA') return "ENTERING FINN'S COTTAGE";
+  if (mapId === 'house-neighborB') return "ENTERING LYRA'S ABODE";
   if (mapId === 'house-inn') return 'ENTERING THE VILLAGE INN';
   return 'TRANSITIONING MAP';
 }
@@ -41,9 +40,16 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
   useEffect(() => {
     let hideTimeout: number | undefined;
     try {
-      const isInternalTransition = sessionStorage.getItem(INTERNAL_TRANSITION_KEY) === '1';
+      const isInternalTransition = sessionStorage.getItem(CHAPTER1_INTERNAL_TRANSITION_KEY) === '1';
+      const shouldSkipBoot = sessionStorage.getItem(CHAPTER1_SKIP_BOOT_ONCE_KEY) === '1';
+
       if (isInternalTransition) {
-        sessionStorage.removeItem(INTERNAL_TRANSITION_KEY);
+        sessionStorage.removeItem(CHAPTER1_INTERNAL_TRANSITION_KEY);
+        hideTimeout = window.setTimeout(() => setShowBootLoader(false), 0);
+      }
+
+      if (shouldSkipBoot) {
+        sessionStorage.removeItem(CHAPTER1_SKIP_BOOT_ONCE_KEY);
         hideTimeout = window.setTimeout(() => setShowBootLoader(false), 0);
       }
     } catch {
@@ -82,7 +88,7 @@ export function Chapter1GameClient({ routeMapId }: Chapter1GameClientProps) {
     setMapTransitioning(true);
     lastPushedRouteRef.current = targetRoute;
     try {
-      sessionStorage.setItem(INTERNAL_TRANSITION_KEY, '1');
+      sessionStorage.setItem(CHAPTER1_INTERNAL_TRANSITION_KEY, '1');
     } catch {
       // no-op: transition still proceeds even if storage is unavailable.
     }
