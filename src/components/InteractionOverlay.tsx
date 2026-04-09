@@ -37,8 +37,8 @@ export function InteractionOverlay() {
 
       {/* Clue / Narration Text */}
       {!isDialogueActive && isNarrationActive && currentNarration && (
-        <div className={`mb-8 max-w-2xl animate-in fade-in zoom-in duration-500 p-6 sm:p-8 ${PIXEL_HUD.panelMuted}`}>
-          <p className={`text-center text-base sm:text-xl leading-relaxed ${PIXEL_HUD.text}`}>
+        <div className="fixed bottom-5 left-5 sm:bottom-7 sm:left-7 max-w-[70vw]">
+          <p className="font-mono text-sm sm:text-lg leading-relaxed text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.75)]">
             &ldquo;{currentNarration}&rdquo;
           </p>
         </div>
