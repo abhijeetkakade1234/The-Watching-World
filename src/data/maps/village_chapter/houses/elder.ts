@@ -36,7 +36,16 @@ import type { DynamicEntity } from '@/types/game';
 
 export const ELDER_SPAWN = { x: 7, y: 10 };
 export const ELDER_ENTITIES: DynamicEntity[] = [
-  { id: 'elder', x: 8, y: 3, type: 'npc', message: 'The Watchers are restless... proceed with caution, child.' },
-  { id: 'chest-map', x: 2, y: 8, type: 'chest', message: "You found the Village Map! The route is now clear. Press [M] to open map." },
+  {
+    id: 'elder',
+    x: 8,
+    y: 3,
+    type: 'npc',
+    sprite: '/characters/Kael.png',
+    width: 2,
+    height: 2,
+    message: 'The Watchers are restless... proceed with caution, child.',
+  },
+  { id: 'chest-map', x: 2, y: 8, type: 'chest', message: "A weathered chart lies inside, but the true map is with Elder Kael." },
   { id: 'bed-elder', x: 3, y: 8, type: 'npc', sprite: '/characters/bed.png', width: 2, height: 2 }
 ];

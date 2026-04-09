@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { PIXEL_HUD } from '@/styles/pixelHud';
 import { useGameStore } from '../store/gameStore';
 
 // Reserved for future chapters. Keep logic compiled but not mounted in Chapter 1 UI.
@@ -95,10 +96,12 @@ export function GameLoop() {
 
   if (status === 'game_over') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
-        <div className="text-center p-8 bg-slate-900/40 border border-red-500/30 rounded-xl">
-          <h1 className="text-6xl font-bold text-red-500 mb-4 animate-pulse">VITAL SIGNS LOST</h1>
-          <button onClick={() => window.location.reload()} className="mt-8 px-10 py-4 bg-red-900/50 border-2 border-red-500/50 rounded-lg text-white font-bold hover:bg-red-800 hover:border-red-400 transition-all">REBOOT SYSTEM</button>
+      <div className={`fixed inset-0 z-50 flex items-center justify-center ${PIXEL_HUD.overlayBackdrop}`}>
+        <div className={`p-8 text-center ${PIXEL_HUD.panelDanger}`}>
+          <h1 className="mb-4 font-mono text-4xl sm:text-6xl font-bold text-[#d36d57] animate-pulse">VITAL SIGNS LOST</h1>
+          <button onClick={() => window.location.reload()} className={`mt-8 ${PIXEL_HUD.buttonBase} ${PIXEL_HUD.buttonSecondary}`}>
+            REBOOT SYSTEM
+          </button>
         </div>
       </div>
     );
@@ -106,10 +109,12 @@ export function GameLoop() {
 
   if (status === 'victory') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold text-emerald-400 mb-4 animate-pulse">CONNECTION SECURED</h1>
-          <button onClick={() => window.location.reload()} className="mt-8 px-6 py-3 bg-emerald-900/50 hover:bg-emerald-800 border border-emerald-500 rounded text-white font-bold transition-all">NEW INSTANCE</button>
+      <div className={`fixed inset-0 z-50 flex items-center justify-center ${PIXEL_HUD.overlayBackdrop}`}>
+        <div className={`p-8 text-center ${PIXEL_HUD.panelSuccess}`}>
+          <h1 className="mb-4 font-mono text-4xl sm:text-6xl font-bold text-[#8fbe5e] animate-pulse">CONNECTION SECURED</h1>
+          <button onClick={() => window.location.reload()} className={`mt-8 ${PIXEL_HUD.buttonBase} ${PIXEL_HUD.buttonSecondary}`}>
+            NEW INSTANCE
+          </button>
         </div>
       </div>
     );

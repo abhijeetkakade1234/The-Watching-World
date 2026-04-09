@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Watching World
 
-## Getting Started
+A pixel-art RPG adventure built with Next.js + TypeScript where Leo explores a world that reacts to his journey.
 
-First, run the development server:
+## What This Game Is About
+
+Leo's grandmother is falling to a mysterious illness called the Watching Blight.  
+To save her, Leo must travel beyond his village and search for the Heart of Aether while uncovering what is truly watching the world.
+
+The game blends:
+
+- top-down exploration
+- narrative NPC encounters
+- chapter-based progression
+- atmospheric pixel-art presentation
+
+## Chapters
+
+- Chapter 1: **The Watching Forest**
+- Chapter 2: **The Watching Deep**
+- Future chapters: naming to be decided later
+
+## Project Overview
+
+The game currently focuses on Chapter 1 gameplay flow and progression systems:
+
+- Story-driven intro and chapter transition flow
+- Tile-based village + house maps
+- Objective system and scripted NPC dialogue
+- Interaction overlays, loaders, pause menu, and chapter music
+- Zustand-powered game state with modular slices (core + chapter-specific)
+
+## Current Development Status
+
+Current implementation is in active Chapter 1 production:
+
+- Landing flow: start button -> loader -> intro video -> loader -> Chapter 1
+- Chapter 1 questline is playable (Finn objective flow + Elder Rowan bridge gate)
+- Bridge crossing transitions into Chapter 2 route
+- Pause/restart/music systems are functional
+- Pixel-style UI pass is applied across major overlays/HUD components
+
+Chapter 2 is scaffolded but still placeholder content:
+
+- chapter module files for dialogue/objectives/routes exist
+- Chapter 2 music component template exists (not mounted yet)
+- gameplay systems and map progression for Chapter 2 are next implementation steps
+
+## Tech Stack
+
+- Next.js (App Router)
+- React + TypeScript
+- Zustand (state management with persistence)
+- Tailwind CSS
+- Cloudflare deployment tooling (`@opennextjs/cloudflare`, Wrangler)
+
+## Run Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Useful Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev        # local development
+npm run typecheck  # TypeScript checks
+npm run lint       # ESLint
+npm run build      # production build
+npm run deploy     # Cloudflare deploy flow
+```
 
-## Learn More
+## Important Directories
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app` - routes/pages
+- `src/components` - game UI and overlays
+- `src/data/maps` - map data
+- `src/chapters` - chapter-scoped content modules (dialogue/objectives/routes)
+- `src/store` - Zustand root store + slices
+- `public` - sprites, audio, video, PWA assets
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Chapter 2 scaffolding exists and is ready for implementation.
+- The UI theme is aligned to a pixel-art RPG vibe.

@@ -22,3 +22,19 @@ export const CHAPTER1_ROWAN_DIALOGUE_SCRIPT: DialogueLine[] = [
   { speaker: 'Elder Rowan', text: 'Beyond this point... the forest stops forgiving.' },
   { speaker: 'Elder Rowan', text: 'If you step forward... there is no turning back.' },
 ];
+
+export const CHAPTER1_KAEL_DIALOGUE_SCRIPT: DialogueLine[] = [
+  { speaker: 'Elder Kael', text: 'So... Finn sent you.' },
+  { speaker: 'Elder Kael', text: "The Blight has reached your home... I'm sorry, child." },
+  { speaker: 'Elder Kael', text: 'Take this map. It will guide you... but not protect you.' },
+  { speaker: 'Elder Kael', text: 'The forest ahead remembers every step.' },
+  { speaker: 'Elder Kael', text: 'Walk carefully, Leo.' },
+];
+
+export const CHAPTER1_LYRA_DIALOGUE_SCRIPT: DialogueLine[] = [
+  { speaker: 'Lyra', text: "...You don't belong here." },
+  { speaker: 'Lyra', text: "But I can see it... you're trying to save someone." },
+  { speaker: 'Lyra', text: 'Your grandmother... she must be strong to have raised you.' },
+  { speaker: 'Lyra', text: "There's a chest nearby. Take what you need." },
+  { speaker: 'Lyra', text: 'And be careful... the forest listens.' },
+];

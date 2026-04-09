@@ -1,5 +1,6 @@
 'use client';
 
+import { PIXEL_HUD } from '@/styles/pixelHud';
 import { useGameStore } from '../store/gameStore';
 
 // Reserved for future chapters. Keep logic compiled but not mounted in Chapter 1 UI.
@@ -12,13 +13,13 @@ export function HealthBar() {
   const MAX_ENERGY = 300;
 
   // Integrity (Health) Color
-  let hpColor = 'bg-emerald-500 shadow-emerald-400';
-  if (playerEnergy <= 100) hpColor = 'bg-yellow-400 shadow-yellow-300';
-  if (playerEnergy <= 50) hpColor = 'bg-red-500 shadow-red-400 animate-pulse';
+  let hpColor: string = PIXEL_HUD.barFillGreen;
+  if (playerEnergy <= 100) hpColor = PIXEL_HUD.barFillAmber;
+  if (playerEnergy <= 50) hpColor = `${PIXEL_HUD.barFillRed} animate-pulse`;
 
   // Exhaustion (Hunger) Color
-  let hgColor = 'bg-orange-500 shadow-orange-400';
-  if (playerHunger > 80) hgColor = 'bg-red-600 shadow-red-500 animate-bounce';
+  let hgColor: string = PIXEL_HUD.barFillAmber;
+  if (playerHunger > 80) hgColor = `${PIXEL_HUD.barFillRed} animate-bounce`;
 
   const isExhausted = playerHunger > 85; // Matches new 85 threshold in store
   const isBlurred = visibilityRadius < 15;
@@ -28,10 +29,10 @@ export function HealthBar() {
       {/* INTEGRITY BAR */}
       <div>
         <div className="flex justify-between items-end mb-1 text-[10px] sm:text-xs">
-           <span className="text-emerald-400 font-black tracking-[0.2em] uppercase text-shadow-sm">Physiological Integrity</span>
-           <span className="text-white font-bold tabular-nums">{Math.floor(playerEnergy)} / {MAX_ENERGY}</span>
+           <span className={`${PIXEL_HUD.heading} text-[#8fbe5e]`}>Physiological Integrity</span>
+           <span className={`${PIXEL_HUD.text} font-bold tabular-nums`}>{Math.floor(playerEnergy)} / {MAX_ENERGY}</span>
         </div>
-        <div className="h-3 w-full bg-slate-900 border border-slate-700 p-[1px] rounded-sm overflow-hidden backdrop-blur-md">
+        <div className={`h-3 w-full overflow-hidden ${PIXEL_HUD.barTrack}`}>
           <div 
             className={`h-full transition-all duration-300 ${hpColor}`} 
             style={{ width: `${Math.max(0, Math.min(100, (playerEnergy / MAX_ENERGY) * 100))}%` }}
@@ -42,10 +43,10 @@ export function HealthBar() {
       {/* EXHAUSTION BAR */}
       <div>
         <div className="flex justify-between items-end mb-1 text-[10px] sm:text-xs">
-           <span className="text-orange-400 font-black tracking-[0.2em] uppercase text-shadow-sm">Neural Exhaustion</span>
-           <span className="text-white font-bold tabular-nums">{Math.floor(playerHunger)}%</span>
+           <span className={`${PIXEL_HUD.heading} text-[#d89f57]`}>Neural Exhaustion</span>
+           <span className={`${PIXEL_HUD.text} font-bold tabular-nums`}>{Math.floor(playerHunger)}%</span>
         </div>
-        <div className="h-2 w-full bg-slate-900 border border-slate-800 p-[1px] rounded-sm overflow-hidden backdrop-blur-md">
+        <div className={`h-2 w-full overflow-hidden ${PIXEL_HUD.barTrack}`}>
           <div 
             className={`h-full transition-all duration-700 ${hgColor}`} 
             style={{ width: `${playerHunger}%` }}
@@ -56,12 +57,12 @@ export function HealthBar() {
       {/* STATUS INDICATORS */}
       <div className="flex gap-2 justify-center">
         {isExhausted && (
-          <span className="px-2 py-0.5 bg-red-900/40 text-red-500 text-[10px] font-black border border-red-500 animate-pulse rounded uppercase tracking-widest">
+          <span className="border border-[#8f4032] bg-[#2d120f] px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.16em] text-[#de7f68] animate-pulse">
             Speed Restricted
           </span>
         )}
         {isBlurred && (
-          <span className="px-2 py-0.5 bg-purple-900/40 text-purple-400 text-[10px] font-black border border-purple-500 animate-pulse rounded uppercase tracking-widest">
+          <span className="border border-[#6b5a2d] bg-[#261d0e] px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.16em] text-[#cfbb7e] animate-pulse">
             Vision Impaired
           </span>
         )}

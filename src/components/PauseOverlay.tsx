@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { PIXEL_HUD } from '@/styles/pixelHud';
 import { useGameStore } from '../store/gameStore';
 
 export function PauseOverlay() {
@@ -31,40 +32,40 @@ export function PauseOverlay() {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md transition-all duration-300">
-      <div className="bg-slate-900 border-2 border-cyan-500/50 p-8 rounded-2xl shadow-[0_0_50px_rgba(34,211,238,0.2)] w-80 text-center space-y-6">
-        <h2 className="text-4xl font-black text-cyan-400 tracking-widest uppercase italic">PAUSED</h2>
-        
+    <div className={`fixed inset-0 z-[200] flex items-center justify-center ${PIXEL_HUD.overlayBackdrop} transition-all duration-150`}>
+      <div className={`w-80 space-y-6 p-6 text-center ${PIXEL_HUD.panel}`}>
+        <h2 className={`text-3xl font-black ${PIXEL_HUD.heading}`}>Paused</h2>
+
         <div className="space-y-3 pt-4">
-          <button 
+          <button
             onClick={togglePause}
-            className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center justify-center space-x-2"
+            className={`w-full ${PIXEL_HUD.buttonBase} ${PIXEL_HUD.buttonPrimary}`}
           >
             <span>RESUME</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={handleRestart}
-            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-all border border-slate-700"
+            className={`w-full ${PIXEL_HUD.buttonBase} ${PIXEL_HUD.buttonSecondary}`}
           >
             RESTART
           </button>
 
-          <button 
-            className="w-full py-4 bg-slate-800/50 text-slate-500 font-bold rounded-lg cursor-not-allowed border border-slate-800"
+          <button
+            className={`w-full ${PIXEL_HUD.buttonBase} ${PIXEL_HUD.buttonDisabled}`}
           >
             SETTINGS
           </button>
 
           <button
             onClick={toggleMusic}
-            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-all border border-slate-700"
+            className={`w-full ${PIXEL_HUD.buttonBase} ${PIXEL_HUD.buttonSecondary}`}
           >
             MUSIC: {isMusicEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
 
-        <p className="text-slate-500 text-xs pt-4 tracking-tighter">
+        <p className={`pt-3 text-[11px] ${PIXEL_HUD.hint}`}>
           PRESS [ESC] TO CONTINUE
         </p>
       </div>

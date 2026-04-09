@@ -57,7 +57,7 @@ export function MapViewport() {
     movePlayer, initializeGame, togglePause, visibilityRadius,
     toggleMap, interact, interactionMessage, interactionProgress,
     startInteracting, stopInteracting, tickInteraction, interactingEntityId,
-    startFinnDialogue, isDialogueActive
+    startFinnDialogue, startKaelDialogue, startLyraDialogue, isDialogueActive
   } = useGameStore();
 
   const [scale, setScale] = useState(1);
@@ -151,6 +151,20 @@ export function MapViewport() {
             return;
           }
         }
+        if (nearbyEntity?.type === 'npc' && currentMap === 'house-elder') {
+          const baseId = nearbyEntity.id.startsWith('temp-') ? nearbyEntity.id.slice(5) : nearbyEntity.id;
+          if (baseId === 'elder') {
+            startKaelDialogue();
+            return;
+          }
+        }
+        if (nearbyEntity?.type === 'npc' && currentMap === 'house-neighborB') {
+          const baseId = nearbyEntity.id.startsWith('temp-') ? nearbyEntity.id.slice(5) : nearbyEntity.id;
+          if (baseId === 'neighbor-b') {
+            startLyraDialogue();
+            return;
+          }
+        }
 
         if (nearbyEntity?.type === 'chest') {
           startInteracting(nearbyEntity.id);
@@ -204,7 +218,7 @@ export function MapViewport() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [status, isDialogueActive, movePlayer, togglePause, toggleMap, interact, interactionMessage, entities, playerPos, interactingEntityId, startInteracting, stopInteracting, startFinnDialogue, currentMap]);
+  }, [status, isDialogueActive, movePlayer, togglePause, toggleMap, interact, interactionMessage, entities, playerPos, interactingEntityId, startInteracting, stopInteracting, startFinnDialogue, startKaelDialogue, startLyraDialogue, currentMap]);
 
   const widthStr = `${activeCols * TILE_SIZE}px`;
   const heightStr = `${activeRows * TILE_SIZE}px`;
@@ -221,7 +235,17 @@ export function MapViewport() {
   const playerPx = playerPos.x * TILE_SIZE;
   const playerPy = playerPos.y * TILE_SIZE;
   const visPx = visibilityRadius * TILE_SIZE;
-  const playerFrame = PLAYER_FRAMES[facing][walkFrame];
+  const isRowanDialogueClose =
+    isDialogueActive &&
+    currentMap === 'village_chapter' &&
+    entities.some((entity) => {
+      if (entity.type !== 'npc' || entity.isHidden) return false;
+      const baseId = entity.id.startsWith('temp-') ? entity.id.slice(5) : entity.id;
+      return baseId === 'rowan-bridge' && isEntityWithinRange(entity, playerPos.x, playerPos.y, 1);
+    });
+  const effectiveFacing: Facing = isRowanDialogueClose ? 'right' : facing;
+  const effectiveWalkFrame = isRowanDialogueClose ? 0 : walkFrame;
+  const playerFrame = PLAYER_FRAMES[effectiveFacing][effectiveWalkFrame];
   const playerSize = Math.round(TILE_SIZE * PLAYER_SCALE);
   const playerOffset = Math.floor((playerSize - TILE_SIZE) / 2);
 

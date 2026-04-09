@@ -34,9 +34,9 @@ export function chapter1ObjectiveContent(
     return {
       title: 'Prepare before entering the forest:',
       lines: [
-        { text: "Visit Lyra's Abode [front-left]", done: progress.visitedLyraAbode },
+        { text: "Talk to Lyra [Lyra's Abode, front-left]", done: progress.visitedLyraAbode },
         { text: 'Visit the Village Inn [front-right]', done: progress.visitedVillageInn },
-        { text: 'Seek Elder Kael [north path]', done: progress.visitedElderKael },
+        { text: 'Talk to Elder Kael [north path]', done: progress.visitedElderKael },
       ],
     };
   }

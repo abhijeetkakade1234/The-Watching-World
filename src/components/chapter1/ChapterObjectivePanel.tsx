@@ -1,5 +1,6 @@
 'use client';
 
+import { PIXEL_HUD } from '@/styles/pixelHud';
 import type { ObjectivePanelContent } from '@/types/objectives';
 
 interface ChapterObjectivePanelProps {
@@ -11,15 +12,15 @@ export function ChapterObjectivePanel({ label = 'Objective', content }: ChapterO
   if (!content || content.lines.length === 0) return null;
 
   return (
-    <aside className="pointer-events-none fixed left-4 top-4 z-[220] max-w-xs rounded-md border border-cyan-200/20 bg-black/65 p-4 text-slate-100 shadow-xl backdrop-blur-sm sm:left-6 sm:top-6">
-      <p className="mb-2 text-[10px] uppercase tracking-[0.3em] text-cyan-300/90">{label}</p>
+    <aside className={`pointer-events-none fixed left-4 top-4 z-[220] max-w-xs p-4 sm:left-6 sm:top-6 ${PIXEL_HUD.panelMuted}`}>
+      <p className={`mb-2 text-[10px] ${PIXEL_HUD.heading}`}>{label}</p>
 
       {content.title && (
-        <p className="mb-2 text-sm font-semibold leading-relaxed">{content.title}</p>
+        <p className={`mb-2 text-sm leading-relaxed ${PIXEL_HUD.text}`}>{content.title}</p>
       )}
       <div className="space-y-2 text-sm leading-relaxed">
         {content.lines.map((line, index) => (
-          <p key={`${line.text}-${index}`} className={line.done ? 'text-emerald-300' : undefined}>
+          <p key={`${line.text}-${index}`} className={line.done ? 'text-[#99ca63] font-mono' : PIXEL_HUD.text}>
             {line.done ? '[x]' : '[ ]'} {line.text}
           </p>
         ))}
