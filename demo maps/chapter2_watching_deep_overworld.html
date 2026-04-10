@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 2 Prototype - The Watching Deep</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a1210;
+      color: #e8dfc8;
+      font-family: "Courier New", monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px;
+      gap: 10px;
+    }
+    .title { text-align: center; }
+    .title h1 { font-size: 14px; letter-spacing: 2px; color: #cfd89c; text-transform: uppercase; }
+    .title p { font-size: 11px; color: #8ea67f; margin-top: 4px; }
+    .wrap {
+      border: 2px solid #2b3f34;
+      background: #0f1b16;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+      padding: 6px;
+      max-width: min(96vw, 1280px);
+      overflow: auto;
+    }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #0d1512;
+    }
+    .hud {
+      width: min(96vw, 1280px);
+      border: 1px solid #2b3f34;
+      background: #111d18;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #bac9ad;
+    }
+    .hud strong { color: #e9d9a2; }
+  </style>
+</head>
+<body>
+  <div class="title">
+    <h1>The Watching World - Chapter 2 Overworld Prototype</h1>
+    <p>The Watching Deep | north-entry forest descent prototype</p>
+  </div>
+
+  <div class="wrap">
+    <canvas id="game" width="1100" height="700"></canvas>
+  </div>
+
+  <div class="hud" id="hud"></div>
+
+  <script>
+    /* ============================================================
+     * CHAPTER 2 STANDALONE PROTOTYPE
+     * - deterministic handcrafted map (200x150)
+     * - smooth movement + camera
+     * - blocked tiles + explicit collision rectangles
+     * - no gameplay/event triggers in this pass (map-only prototype)
+     * - data sections intentionally shaped for migration to src/data/maps/chapter2/*
+     * ============================================================ */
+
+    const TILE_SIZE = 16;
+    const MAP_COLS = 200;
+    const MAP_ROWS = 150;
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const hud = document.getElementById("hud");
+
+    /* ============================================================
+     * TILE IDS
+     * ============================================================ */
+    const TILE_IDS = {
+      GRASS: 0,
+      PATH: 1,
+      TREES: 2,
+      WATER: 3,
+      BRIDGE: 4,
+      ROCKS: 5,
+      RUINS_GROUND: 6,
+      MYSTERY_GRASS: 7,
+    };
+
+    const TILE_META = {
+      [TILE_IDS.GRASS]: { walkable: true, name: "grass" },
+      [TILE_IDS.PATH]: { walkable: true, name: "path" },
+      [TILE_IDS.TREES]: { walkable: false, name: "trees" },
+      [TILE_IDS.WATER]: { walkable: false, name: "water" },
+      [TILE_IDS.BRIDGE]: { walkable: true, name: "bridge" },
+      [TILE_IDS.ROCKS]: { walkable: false, name: "rocks" },
+      [TILE_IDS.RUINS_GROUND]: { walkable: true, name: "ruins-ground" },
+      [TILE_IDS.MYSTERY_GRASS]: { walkable: true, name: "mystery-grass" },
+    };
+
+    /* ============================================================
+     * MAP DATA (2D array)
+     * ============================================================ */
+    const MAP_DATA = Array.from({ length: MAP_ROWS }, () => Array(MAP_COLS).fill(TILE_IDS.GRASS));
+
+    function setTile(x, y, tileId) {
+      if (x < 0 || y < 0 || x >= MAP_COLS || y >= MAP_ROWS) return;
+      MAP_DATA[y][x] = tileId;
+    }
+
+    function fillRectTiles(x1, y1, x2, y2, tileId) {
+      for (let y = y1; y <= y2; y++) {
+        for (let x = x1; x <= x2; x++) {
+          setTile(x, y, tileId);
+        }
+      }
+    }
+
+    function paintDisk(cx, cy, radius, tileId) {
+      const r2 = radius * radius;
+      for (let y = cy - radius; y <= cy + radius; y++) {
+        for (let x = cx - radius; x <= cx + radius; x++) {
+          const dx = x - cx;
+          const dy = y - cy;
+          if (dx * dx + dy * dy <= r2) {
+            setTile(x, y, tileId);
+          }
+        }
+      }
+    }
+
+    function paintPathLine(x1, y1, x2, y2, width, tileId) {
+      const steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+      for (let i = 0; i <= steps; i++) {
+        const t = steps === 0 ? 0 : i / steps;
+        const x = Math.round(x1 + (x2 - x1) * t);
+        const y = Math.round(y1 + (y2 - y1) * t);
+        paintDisk(x, y, width, tileId);
+      }
+    }
+
+    function carveClearing(cx, cy, rx, ry) {
+      for (let y = cy - ry; y <= cy + ry; y++) {
+        for (let x = cx - rx; x <= cx + rx; x++) {
+          const dx = (x - cx) / rx;
+          const dy = (y - cy) / ry;
+          if (dx * dx + dy * dy <= 1) {
+            setTile(x, y, TILE_IDS.GRASS);
+          }
+        }
+      }
+    }
+
+    // 1) Border forest shell
+    fillRectTiles(0, 0, MAP_COLS - 1, 2, TILE_IDS.TREES);
+    fillRectTiles(0, MAP_ROWS - 3, MAP_COLS - 1, MAP_ROWS - 1, TILE_IDS.TREES);
+    fillRectTiles(0, 0, 2, MAP_ROWS - 1, TILE_IDS.TREES);
+    fillRectTiles(MAP_COLS - 3, 0, MAP_COLS - 1, MAP_ROWS - 1, TILE_IDS.TREES);
+
+    // 2) Dense forest clusters (deterministic, chapter1-like tighter feel)
+    for (let y = 4; y < MAP_ROWS - 4; y += 2) {
+      for (let x = 4; x < MAP_COLS - 4; x += 2) {
+        const pattern = (x * 13 + y * 19 + x * y) % 17;
+        const nearVillage = x > 74 && x < 132 && y > 58 && y < 104;
+        const nearRiverBand = y > 92 && y < 122;
+        const northEntryLane = x > 94 && x < 110 && y < 22;
+        if (!nearVillage && !nearRiverBand && !northEntryLane && pattern <= 8) {
+          setTile(x, y, TILE_IDS.TREES);
+          if ((x + y) % 3 === 0) setTile(x + 1, y, TILE_IDS.TREES);
+        }
+      }
+    }
+
+    // 3) River system: horizontal left -> right divider
+    function riverCenterY(x) {
+      return 104 + Math.floor(Math.sin(x / 16) * 2) + Math.floor(Math.sin(x / 45) * 2);
+    }
+
+    for (let x = 3; x < MAP_COLS - 3; x++) {
+      const cy = riverCenterY(x);
+      for (let y = cy - 5; y <= cy + 5; y++) {
+        setTile(x, y, TILE_IDS.WATER);
+      }
+    }
+
+    // 4) Bridge: only crossing point
+    const BRIDGE = { x1: 158, x2: 166, y1: 96, y2: 113 };
+    fillRectTiles(BRIDGE.x1, BRIDGE.y1, BRIDGE.x2, BRIDGE.y2, TILE_IDS.BRIDGE);
+
+    // 5) Main guided path with curves and reconnecting forks
+    // Entry (north) -> village -> bridge -> lower-side destination
+    paintPathLine(102, 4, 100, 24, 2, TILE_IDS.PATH);
+    paintPathLine(100, 24, 96, 44, 2, TILE_IDS.PATH);
+    paintPathLine(96, 44, 96, 66, 3, TILE_IDS.PATH);
+    paintPathLine(96, 66, 114, 74, 3, TILE_IDS.PATH);
+    paintPathLine(114, 74, 136, 82, 2, TILE_IDS.PATH);
+    paintPathLine(136, 82, 152, 90, 2, TILE_IDS.PATH);
+    paintPathLine(152, 90, 162, 96, 2, TILE_IDS.PATH);
+    paintPathLine(162, 96, 162, 113, 2, TILE_IDS.PATH);
+    paintPathLine(162, 113, 170, 124, 2, TILE_IDS.PATH);
+    paintPathLine(170, 124, 186, 132, 2, TILE_IDS.PATH);
+
+    // Side path: trader hut (off main path, discoverable)
+    paintPathLine(110, 78, 116, 90, 2, TILE_IDS.PATH);
+    paintPathLine(116, 90, 124, 100, 2, TILE_IDS.PATH);
+
+    // Side path: ruins landmark (upper side)
+    paintPathLine(92, 72, 84, 64, 2, TILE_IDS.PATH);
+    paintPathLine(84, 64, 74, 52, 2, TILE_IDS.PATH);
+    paintPathLine(74, 52, 70, 44, 2, TILE_IDS.PATH);
+
+    // Through-village lane reconnect
+    paintPathLine(80, 72, 108, 74, 2, TILE_IDS.PATH);
+    paintPathLine(108, 74, 120, 70, 2, TILE_IDS.PATH);
+    paintPathLine(120, 70, 136, 82, 2, TILE_IDS.PATH);
+
+    // 6) Ruined village ground stamping (center landmark zone)
+    fillRectTiles(80, 62, 124, 96, TILE_IDS.RUINS_GROUND);
+
+    // 7) Clearings (2-3 breathing spaces)
+    carveClearing(52, 78, 8, 6);
+    carveClearing(136, 86, 8, 6);
+    carveClearing(58, 54, 7, 5);
+
+    // 8) Side ruins structure ground
+    fillRectTiles(64, 38, 78, 54, TILE_IDS.RUINS_GROUND);
+
+    // 9) Rocks around ruins and river edges
+    for (let y = 40; y <= 52; y += 2) {
+      for (let x = 65; x <= 77; x += 3) {
+        if ((x + y) % 4 === 0) setTile(x, y, TILE_IDS.ROCKS);
+      }
+    }
+    for (let x = 22; x < 198; x += 9) {
+      const cy = riverCenterY(x);
+      if (x % 18 === 0) setTile(x, cy - 7, TILE_IDS.ROCKS);
+      if (x % 27 === 0) setTile(x + 1, cy + 7, TILE_IDS.ROCKS);
+    }
+
+    // 10) Far side mystery visual tone beyond bridge
+    fillRectTiles(166, 116, 198, 146, TILE_IDS.MYSTERY_GRASS);
+
+    // 11) Enforce single crossing by thickening water except bridge lane
+    for (let x = 3; x < MAP_COLS - 3; x++) {
+      const inBridgeX = x >= BRIDGE.x1 && x <= BRIDGE.x2;
+      const cy = riverCenterY(x);
+      for (let y = cy - 6; y <= cy + 6; y++) {
+        if (!inBridgeX) setTile(x, y, TILE_IDS.WATER);
+      }
+    }
+
+    // Restore bridge (water pass may overwrite)
+    fillRectTiles(BRIDGE.x1, BRIDGE.y1, BRIDGE.x2, BRIDGE.y2, TILE_IDS.BRIDGE);
+
+    /* ============================================================
+     * LANDMARK SPRITES (image-heavy structures)
+     * ============================================================ */
+    const LANDMARK_SPRITES = [
+      // Ruined village cluster (center)
+      { id: "rv_house_1", src: "../public/characters/Broken-houses-ch2/front-side.png", x: 84 * TILE_SIZE, y: 68 * TILE_SIZE, w: 112, h: 80 },
+      { id: "rv_house_2", src: "../public/characters/Broken-houses-ch2/left-side.png", x: 96 * TILE_SIZE, y: 63 * TILE_SIZE, w: 96, h: 86 },
+      { id: "rv_house_3", src: "../public/characters/Broken-houses-ch2/right-side.png", x: 108 * TILE_SIZE, y: 74 * TILE_SIZE, w: 92, h: 78 },
+      { id: "rv_house_4", src: "../public/characters/Broken-houses-ch2/top-down.png", x: 89 * TILE_SIZE, y: 79 * TILE_SIZE, w: 106, h: 70 },
+      { id: "rv_house_5", src: "../public/characters/Broken-houses-ch2/front-door.png", x: 116 * TILE_SIZE, y: 66 * TILE_SIZE, w: 82, h: 70 },
+      { id: "rv_house_6", src: "../public/characters/Broken-houses-ch2/right-door.png", x: 80 * TILE_SIZE, y: 76 * TILE_SIZE, w: 80, h: 68 },
+
+      // Side ruins landmark
+      { id: "side_ruins_gate", src: "../public/characters/Broken-houses-ch2/top-down.png", x: 66 * TILE_SIZE, y: 38 * TILE_SIZE, w: 160, h: 120 },
+
+      // Wandering trader hut
+      { id: "trader_hut", src: "../public/characters/WANDERING/WANDERING-TRADER-HUT-ch2.png", x: 120 * TILE_SIZE, y: 94 * TILE_SIZE, w: 128, h: 112 },
+    ];
+
+    // preload image handles
+    for (const sprite of LANDMARK_SPRITES) {
+      const image = new Image();
+      image.src = sprite.src;
+      sprite.image = image;
+      sprite.loaded = false;
+      image.onload = () => { sprite.loaded = true; };
+      image.onerror = () => { sprite.loaded = false; };
+    }
+
+    /* ============================================================
+     * COLLISION RECTS (explicit blocked geometry for large landmarks)
+     * ============================================================ */
+    const COLLISION_RECTS = [
+      // Ruined village houses
+      { id: "rv_col_1", x: 84 * TILE_SIZE + 10, y: 68 * TILE_SIZE + 34, w: 92, h: 40 },
+      { id: "rv_col_2", x: 96 * TILE_SIZE + 8, y: 63 * TILE_SIZE + 38, w: 78, h: 42 },
+      { id: "rv_col_3", x: 108 * TILE_SIZE + 7, y: 74 * TILE_SIZE + 30, w: 72, h: 44 },
+      { id: "rv_col_4", x: 89 * TILE_SIZE + 10, y: 79 * TILE_SIZE + 24, w: 88, h: 38 },
+      { id: "rv_col_5", x: 116 * TILE_SIZE + 6, y: 66 * TILE_SIZE + 26, w: 66, h: 36 },
+      { id: "rv_col_6", x: 80 * TILE_SIZE + 8, y: 76 * TILE_SIZE + 28, w: 60, h: 36 },
+
+      // Side ruins
+      { id: "ruins_outer", x: 64 * TILE_SIZE + 6, y: 38 * TILE_SIZE + 6, w: 14 * TILE_SIZE, h: 14 * TILE_SIZE },
+      { id: "ruins_core", x: 68 * TILE_SIZE, y: 42 * TILE_SIZE, w: 8 * TILE_SIZE, h: 8 * TILE_SIZE },
+
+      // Trader hut collision
+      { id: "trader_hut_col", x: 120 * TILE_SIZE + 18, y: 94 * TILE_SIZE + 44, w: 92, h: 56 },
+    ];
+
+    /* ============================================================
+     * PLAYER + CAMERA
+     * ============================================================ */
+    const player = {
+      x: 102 * TILE_SIZE + 8,
+      y: 4 * TILE_SIZE + 8,
+      w: 10,
+      h: 10,
+      speed: 120,
+      color: "#f6a56e",
+    };
+
+    const camera = { x: 0, y: 0 };
+    const worldWidth = MAP_COLS * TILE_SIZE;
+    const worldHeight = MAP_ROWS * TILE_SIZE;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function intersects(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function isTileBlocked(tileX, tileY) {
+      if (tileX < 0 || tileY < 0 || tileX >= MAP_COLS || tileY >= MAP_ROWS) return true;
+      const t = MAP_DATA[tileY][tileX];
+      return !TILE_META[t].walkable;
+    }
+
+    function collidesWithMap(rect) {
+      const left = Math.floor(rect.x / TILE_SIZE);
+      const right = Math.floor((rect.x + rect.w - 1) / TILE_SIZE);
+      const top = Math.floor(rect.y / TILE_SIZE);
+      const bottom = Math.floor((rect.y + rect.h - 1) / TILE_SIZE);
+      for (let ty = top; ty <= bottom; ty++) {
+        for (let tx = left; tx <= right; tx++) {
+          if (isTileBlocked(tx, ty)) return true;
+        }
+      }
+      return false;
+    }
+
+    function collidesWithRects(rect) {
+      for (const blocked of COLLISION_RECTS) {
+        if (intersects(rect, blocked)) return true;
+      }
+      return false;
+    }
+
+    function canMoveTo(nextX, nextY) {
+      const nextRect = { x: nextX, y: nextY, w: player.w, h: player.h };
+      return !collidesWithMap(nextRect) && !collidesWithRects(nextRect);
+    }
+
+    const keys = new Set();
+    let debugOverlay = false;
+
+    window.addEventListener("keydown", (e) => {
+      keys.add(e.key.toLowerCase());
+      if (e.key.toLowerCase() === "g") {
+        debugOverlay = !debugOverlay;
+      }
+    });
+    window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+
+    function updatePlayer(dt) {
+      let dx = 0;
+      let dy = 0;
+      if (keys.has("arrowup") || keys.has("w")) dy -= 1;
+      if (keys.has("arrowdown") || keys.has("s")) dy += 1;
+      if (keys.has("arrowleft") || keys.has("a")) dx -= 1;
+      if (keys.has("arrowright") || keys.has("d")) dx += 1;
+
+      if (dx !== 0 && dy !== 0) {
+        const n = Math.sqrt(2);
+        dx /= n;
+        dy /= n;
+      }
+
+      const step = player.speed * dt;
+
+      const nextX = player.x + dx * step;
+      if (canMoveTo(nextX, player.y)) player.x = nextX;
+
+      const nextY = player.y + dy * step;
+      if (canMoveTo(player.x, nextY)) player.y = nextY;
+
+      // world clamp
+      player.x = clamp(player.x, 0, worldWidth - player.w);
+      player.y = clamp(player.y, 0, worldHeight - player.h);
+    }
+
+    function updateCamera() {
+      const targetX = player.x + player.w * 0.5 - canvas.width * 0.5;
+      const targetY = player.y + player.h * 0.5 - canvas.height * 0.5;
+
+      camera.x += (targetX - camera.x) * 0.12;
+      camera.y += (targetY - camera.y) * 0.12;
+
+      camera.x = clamp(camera.x, 0, worldWidth - canvas.width);
+      camera.y = clamp(camera.y, 0, worldHeight - canvas.height);
+    }
+
+    function drawTile(tileX, tileY, tileId) {
+      const px = tileX * TILE_SIZE - camera.x;
+      const py = tileY * TILE_SIZE - camera.y;
+
+      switch (tileId) {
+        case TILE_IDS.GRASS:
+          ctx.fillStyle = "#3b6f2b";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#4f8a38";
+          ctx.fillRect(px + 2, py + 3, 2, 3);
+          ctx.fillRect(px + 10, py + 7, 2, 2);
+          break;
+        case TILE_IDS.MYSTERY_GRASS:
+          ctx.fillStyle = "#304e36";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#486447";
+          ctx.fillRect(px + 3, py + 2, 2, 3);
+          ctx.fillRect(px + 9, py + 8, 2, 2);
+          break;
+        case TILE_IDS.PATH:
+          ctx.fillStyle = "#8d7349";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#7b623e";
+          ctx.fillRect(px, py, TILE_SIZE, 2);
+          ctx.fillRect(px, py + TILE_SIZE - 2, TILE_SIZE, 2);
+          break;
+        case TILE_IDS.TREES:
+          ctx.fillStyle = "#245c2f";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#2f743d";
+          ctx.fillRect(px + 2, py + 1, 12, 9);
+          ctx.fillStyle = "#163923";
+          ctx.fillRect(px + 6, py + 10, 4, 6);
+          break;
+        case TILE_IDS.WATER:
+          ctx.fillStyle = "#1e4e8a";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#2d73bf";
+          ctx.fillRect(px + 1, py + 4, 8, 2);
+          ctx.fillRect(px + 8, py + 10, 7, 2);
+          break;
+        case TILE_IDS.BRIDGE:
+          ctx.fillStyle = "#5c4432";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#7a5b43";
+          ctx.fillRect(px, py + 1, TILE_SIZE, 2);
+          ctx.fillRect(px, py + TILE_SIZE - 3, TILE_SIZE, 2);
+          ctx.fillStyle = "#3f2f23";
+          ctx.fillRect(px + 3, py + 3, 2, 10);
+          ctx.fillRect(px + 7, py + 3, 2, 10);
+          ctx.fillRect(px + 11, py + 3, 2, 10);
+          break;
+        case TILE_IDS.ROCKS:
+          ctx.fillStyle = "#556272";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#6f7f92";
+          ctx.fillRect(px + 3, py + 3, 9, 6);
+          ctx.fillStyle = "#3a4653";
+          ctx.fillRect(px + 4, py + 10, 8, 3);
+          break;
+        case TILE_IDS.RUINS_GROUND:
+          ctx.fillStyle = "#5d624f";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = "#737a61";
+          ctx.fillRect(px + 1, py + 1, 5, 2);
+          ctx.fillStyle = "#494d40";
+          ctx.fillRect(px + 8, py + 10, 7, 2);
+          break;
+        default:
+          ctx.fillStyle = "#ff00ff";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+    }
+
+    function drawMap() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const startCol = Math.max(0, Math.floor(camera.x / TILE_SIZE) - 1);
+      const endCol = Math.min(MAP_COLS - 1, Math.ceil((camera.x + canvas.width) / TILE_SIZE) + 1);
+      const startRow = Math.max(0, Math.floor(camera.y / TILE_SIZE) - 1);
+      const endRow = Math.min(MAP_ROWS - 1, Math.ceil((camera.y + canvas.height) / TILE_SIZE) + 1);
+
+      for (let y = startRow; y <= endRow; y++) {
+        for (let x = startCol; x <= endCol; x++) {
+          drawTile(x, y, MAP_DATA[y][x]);
+        }
+      }
+
+      // Draw landmark sprites over tiles
+      for (const sprite of LANDMARK_SPRITES) {
+        const sx = sprite.x - camera.x;
+        const sy = sprite.y - camera.y;
+        const visible = sx + sprite.w >= 0 && sy + sprite.h >= 0 && sx <= canvas.width && sy <= canvas.height;
+        if (!visible) continue;
+
+        if (sprite.loaded && sprite.image) {
+          ctx.drawImage(sprite.image, sx, sy, sprite.w, sprite.h);
+        } else {
+          // fallback placeholder if image missing while previewing
+          ctx.fillStyle = "#5b4545";
+          ctx.fillRect(sx, sy, sprite.w, sprite.h);
+          ctx.strokeStyle = "#c9a774";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(sx + 1, sy + 1, sprite.w - 2, sprite.h - 2);
+          ctx.fillStyle = "#d4c5a2";
+          ctx.font = "10px Courier New";
+          ctx.fillText(sprite.id, sx + 6, sy + 14);
+        }
+      }
+
+      // player
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x - camera.x, player.y - camera.y, player.w, player.h);
+      ctx.strokeStyle = "#ffe3b9";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(player.x - camera.x, player.y - camera.y, player.w, player.h);
+
+      if (debugOverlay) {
+        // blocked collision rects
+        ctx.strokeStyle = "rgba(255, 130, 130, 0.95)";
+        for (const rect of COLLISION_RECTS) {
+          ctx.strokeRect(rect.x - camera.x, rect.y - camera.y, rect.w, rect.h);
+        }
+
+      }
+    }
+
+    function drawHud() {
+      const px = Math.floor(player.x / TILE_SIZE);
+      const py = Math.floor(player.y / TILE_SIZE);
+
+      hud.innerHTML = `
+        <strong>Controls:</strong> WASD / Arrow Keys move, <strong>G</strong> toggle collision debug overlays<br/>
+        <strong>Player Tile:</strong> ${px}, ${py}<br/>
+        <strong>Map:</strong> ${MAP_COLS} x ${MAP_ROWS} tiles, handcrafted deterministic layout
+      `;
+    }
+
+    let lastTime = performance.now();
+
+    function loop(now) {
+      const dt = Math.min(0.033, (now - lastTime) / 1000);
+      lastTime = now;
+
+      updatePlayer(dt);
+      updateCamera();
+      drawMap();
+      drawHud();
+
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -6,7 +6,13 @@ import {
   chapter1Map, COLS as EXT_COLS, ROWS as EXT_ROWS,
   HOUSE_MAPS
 } from '../data/maps/village_chapter/index';
-import { drawTile, drawInteriorTile, TILE_SIZE } from '../utils/tile_renderer';
+import {
+  drawTile,
+  drawInteriorTile,
+  drawChapter1ExteriorSpriteLayer,
+  preloadChapter1ExteriorSprites,
+  TILE_SIZE
+} from '../utils/tile_renderer';
 import { isEntityWithinRange } from '@/utils/entityInteraction';
 
 type Facing = 'up' | 'down' | 'left' | 'right';
@@ -90,22 +96,39 @@ export function MapViewport() {
   }, []);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    canvasRef.current.width = activeCols * TILE_SIZE;
-    canvasRef.current.height = activeRows * TILE_SIZE;
-    const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
+    let disposed = false;
+    const drawActiveMap = async () => {
+      if (!canvasRef.current) return;
+      canvasRef.current.width = activeCols * TILE_SIZE;
+      canvasRef.current.height = activeRows * TILE_SIZE;
+      const ctx = canvasRef.current.getContext('2d');
+      if (!ctx) return;
 
-    for (let r = 0; r < activeRows; r++) {
-      for (let c = 0; c < activeCols; c++) {
-        activeDraw(ctx, c, r, activeMap[r][c]);
+      if (!hasValidHouseMap && currentMap === 'village_chapter') {
+        await preloadChapter1ExteriorSprites();
+        if (disposed) return;
       }
-    }
 
-    if (currentMap === 'village_chapter') {
-      initializeGame();
-    }
-  }, [currentMap, activeCols, activeRows, activeMap, activeDraw, initializeGame]);
+      for (let r = 0; r < activeRows; r++) {
+        for (let c = 0; c < activeCols; c++) {
+          activeDraw(ctx, c, r, activeMap[r][c]);
+        }
+      }
+
+      if (!hasValidHouseMap && currentMap === 'village_chapter') {
+        drawChapter1ExteriorSpriteLayer(ctx);
+      }
+
+      if (currentMap === 'village_chapter') {
+        initializeGame();
+      }
+    };
+
+    void drawActiveMap();
+    return () => {
+      disposed = true;
+    };
+  }, [currentMap, activeCols, activeRows, activeMap, activeDraw, initializeGame, hasValidHouseMap]);
 
   // Handle Interaction Tick
   useEffect(() => {

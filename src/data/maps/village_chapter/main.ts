@@ -11,7 +11,7 @@ export { TILES, TILE_PROPERTIES, COLS, ROWS, SPAWN_POINT, EXIT_ZONE, CHAPTER_LAB
 const {
   G1,G2,G3,TK,DV,WT,WB,WL,WR,WI,
   HR,HW,HWI,HD,FH,FV,SG,WL2,BR,GR,BD,
-  FT,CF,BN,LP,WMH,WMB,HL,INNR,INNW,GPL,
+  CF,BN,LP,WMH,WMB,HL,INNR,INNW,GPL,
   THR,THW,SR,SW,
   FCTL, FCTR, FCBL, FCBR
 } = TILES;
@@ -54,14 +54,12 @@ function placeYard(r: number, c: number, w: number, h: number) {
 
 function placeFarm(r: number, c: number, w: number, h: number) {
   fill(r + 1, c + 1, r + h - 2, c + w - 2, CF);
-  hline(r, c + 1, c + w - 2, FH); hline(r + h - 1, c + 1, c + w - 2, FH);
-  vline(c, r + 1, r + h - 2, FV); vline(c + w - 1, r + 1, r + h - 2, FV);
-  // Corners
-  set(r, c, FCTL); set(r, c + w - 1, FCTR);
-  set(r + h - 1, c, FCBL); set(r + h - 1, c + w - 1, FCBR);
-  set(r, c, FT); set(r, c + w - 1, FT);
-  // Irrigation ditch
-  set(r + Math.floor(h/2), c + Math.floor(w/2), WI);
+  // Farms intentionally have no fence ring now (sprite-based exterior visuals).
+  // Keep perimeter as walkable grassy path so movement/collision is not blocked by farm edges.
+  fill(r, c, r + h - 1, c + w - 1, GPL);
+  // Crop tiles are still authored for data consistency, but sprite overlay will
+  // visually replace this area in renderer.
+  fill(r + 1, c + 1, r + h - 2, c + w - 2, CF);
 }
 
 function placeSquare(r: number, c: number, w: number, h: number) {
@@ -124,7 +122,10 @@ placeHouse(10, 37, 10, 6, 'INN');
 set(16, 41, SG); 
 
 // Aesthetic Ponds
-fill(6, 10, 7, 12, WT); set(7, 11, WI); // Top West Pond
+// Pond 1 — Central-west meadow (rows 13-15, cols 13-17).
+// Open grassland: below farm sprite (rows 0-6.5), left of main path (cols 21-22),
+// above Neighbor A yard (row 17+), right of farm tiles (cols 10-19 end at row 8).
+fill(13, 13, 15, 17, WT); fill(14, 14, 14, 16, WI); // Central-West Village Pond
 fill(35, 50, 37, 53, WT); fill(36, 51, 36, 52, WI); // Bottom East Pond
 
 // Village Square (Central Hub)

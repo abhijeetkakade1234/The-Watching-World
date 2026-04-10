@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { getDb, type Env } from '@/db';
-import { actions, sessions } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import type { Env } from '@/db';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import {
   aiActionDecisionSchema,
@@ -39,31 +37,9 @@ export async function POST(req: NextRequest) {
     }
     const { sessionId, playerX, playerY, playerEnergy, playerHunger, currentMap } = parsed.data;
 
-    let historySummary = 'Game just started.';
-    let qteSuccess = 0;
-    let qteFail = 0;
-
-    // Only try to access DB if we have a real DB binding (Cloudflare production or local wrangler)
-    if (env.DB) {
-      try {
-        const db = getDb(env);
-        const historyLogs = await db.select()
-          .from(actions)
-          .where(eq(actions.sessionId, sessionId))
-          .orderBy(desc(actions.timestamp))
-          .limit(12);
-
-        historySummary = (historyLogs as (typeof actions.$inferSelect)[]).reverse().map(log => {
-          return `${log.actionType} at (${log.posX}, ${log.posY})`;
-        }).join('\n');
-
-        const session = await db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
-        qteSuccess = session?.qteSuccessCount || 0;
-        qteFail = session?.qteFailCount || 0;
-      } catch (e) {
-        console.error('Database access failed, falling back to mock history.', e);
-      }
-    }
+    const historySummary = 'Milestone mode active. Session telemetry is not persisted.';
+    const qteSuccess = 0;
+    const qteFail = 0;
 
     let sector = 1;
     let unlockedPowers = 'Basic Traps';
@@ -111,6 +87,7 @@ export async function POST(req: NextRequest) {
 
       const resText = response.text || '{}';
       const parsedDecision = JSON.parse(resText);
+      void sessionId;
 
       const validatedDecision = aiActionDecisionSchema.safeParse(parsedDecision);
       if (!validatedDecision.success) {
