@@ -72,15 +72,14 @@ export const TILE_PROPERTIES: Record<number, { walkable: boolean; name: string }
   [TILES.FCBR]:{ walkable: false, name: 'fence corner' },
 };
 
-export const SPAWN_POINT  = { x: 20, y: 18 };
-export const EXIT_ZONE    = { xStart: 21, xEnd: 22, y: 69 };
+export const SPAWN_POINT  = { x: 32, y: 30 };
+export const EXIT_ZONE    = { xStart: 21, xEnd: 22, y: 0 };
 
 export const CHAPTER_LABELS = [
-  { col: 11, row:  7, text: 'ELDER',         color: '#ffe870' },
-  { col: 17, row: 16, text: "BOY'S HOME",    color: '#ffe870' },
-  { col: 35, row:  6, text: 'POND',          color: '#80d8ff' },
-  { col:  6, row: 10, text: 'WELL',          color: '#c0e0ff' },
-  { col: 27, row:  9, text: 'NEIGHBOR',      color: '#ffe870' },
-  { col: 16, row: 12, text: '↓ PATH',        color: '#ffe870' },
-  { col: 18, row: 67, text: '▼ EXIT',        color: '#ff9040' },
+  { col: 11, row: 13, text: 'ELDER',         color: '#ffe870' },
+  { col: 17, row: 28, text: "LEO'S HOME",    color: '#ffe870' },
+  { col: 35, row: 12, text: 'POND',          color: '#80d8ff' },
+  { col:  6, row: 16, text: 'WELL',          color: '#c0e0ff' },
+  { col: 27, row: 15, text: 'NEIGHBOR',      color: '#ffe870' },
+  { col: 18, row:  1, text: '▲ EXIT',        color: '#ff9040' },
 ];

@@ -28,7 +28,7 @@ export function chapter1ObjectiveContent(
     const allCompleted =
       progress.visitedLyraAbode && progress.visitedVillageInn && progress.visitedElderKael;
     if (allCompleted) {
-      return { lines: [{ text: 'Meet Elder Rowan [south bridge]' }] };
+      return { lines: [{ text: 'Meet Elder Rowan [north bridge]' }] };
     }
 
     return {

@@ -124,7 +124,7 @@ type LoadedHouseSprite = Chapter1ExteriorHouseSprite & { image: HTMLImageElement
 
 const CHAPTER1_EXTERIOR_HOUSE_SPRITES: Chapter1ExteriorHouseSprite[] = [
   // ── FARMS (z:0) ─────────────────────────────────────────────────────────
-  { id: 'farm-northwest', src: '/characters/chapter1-houses/farm1.png', anchorTileX: 9,  anchorTileY: 0,  widthPx: 192, heightPx: 104, z: 0 },
+  { id: 'farm-northwest', src: '/characters/chapter1-houses/farm1.png', anchorTileX: 9,  anchorTileY: 6,  widthPx: 192, heightPx: 104, z: 0 },
   { id: 'farm-southwest', src: '/characters/chapter1-houses/farm2.png', anchorTileX: 9,  anchorTileY: 50, widthPx: 240, heightPx: 112, z: 0 },
   { id: 'farm-southeast', src: '/characters/chapter1-houses/farm1.png', anchorTileX: 34, anchorTileY: 53, widthPx: 208, heightPx: 116, z: 0 },
 
@@ -133,15 +133,16 @@ const CHAPTER1_EXTERIOR_HOUSE_SPRITES: Chapter1ExteriorHouseSprite[] = [
   { id: 'pond-west',   src: '/characters/chapter1-houses/pond1.png',   anchorTileX: 11, anchorTileY: 11, widthPx: 112, heightPx: 96,  z: 0 },
   // Pond 2 — Bottom East: map fill(35,50,37,53).
   { id: 'pond-east',   src: '/characters/chapter1-houses/pond2.png',   anchorTileX: 47, anchorTileY: 33, widthPx: 112, heightPx: 96,  z: 0 },
-  // Bridge — Southern crossing: map fill(64,21,68,23).
-  { id: 'bridge-south',src: '/characters/chapter1-houses/bridge.png',  anchorTileX: 20, anchorTileY: 63, widthPx: 64,  heightPx: 112, z: 1 },
+  // Bridge — Northern crossing: map fill(0,21,4,23).
+  { id: 'bridge-north',src: '/characters/chapter1-houses/bridge.png',  anchorTileX: 20, anchorTileY: -1, widthPx: 64,  heightPx: 112, z: 1 },
 
   // ── BUILDINGS ────────────────────────────────────────────────────────────
-  { id: 'kaels-hall',   src: '/characters/chapter1-houses/kaels-hall.png',   anchorTileX: 23, anchorTileY: 3,  widthPx: 160, heightPx: 112, z: 1 },
+  { id: 'kaels-hall',   src: '/characters/chapter1-houses/kaels-hall.png',   anchorTileX: 23, anchorTileY: 9,  widthPx: 160, heightPx: 112, z: 1 },
   { id: 'leos-house',   src: '/characters/chapter1-houses/leos-house.png',   anchorTileX: 28, anchorTileY: 23, widthPx: 160, heightPx: 112, z: 2 },
-  { id: 'finns-cottage',src: '/characters/chapter1-houses/finns-cottage.png', anchorTileX: 3,  anchorTileY: 16, widthPx: 160, heightPx: 112, z: 2 },
+  { id: 'finns-cottage',src: '/characters/chapter1-houses/finns-cottage.png', anchorTileX: 3,  anchorTileY: 22, widthPx: 160, heightPx: 112, z: 2 },
   { id: 'lyras-abode',  src: '/characters/chapter1-houses/lyras-abode.png',  anchorTileX: 8,  anchorTileY: 38, widthPx: 160, heightPx: 112, z: 2 },
-  { id: 'village-inn',  src: '/characters/chapter1-houses/village-inn.png',  anchorTileX: 36, anchorTileY: 9,  widthPx: 192, heightPx: 128, z: 3 },
+  { id: 'village-inn',  src: '/characters/chapter1-houses/village-inn.png',  anchorTileX: 36, anchorTileY: 15, widthPx: 192, heightPx: 128, z: 3 },
+  { id: 'pond-inn',     src: '/characters/chapter1-houses/pond1.png',        anchorTileX: 50, anchorTileY: 14, widthPx: 112, heightPx: 96,  z: 0 },
 ];
 
 let chapter1HouseSpritesLoaded = false;
@@ -171,6 +172,8 @@ function isSmallPondWaterTile(col: number, row: number): boolean {
   if (row >= 13 && row <= 15 && col >= 13 && col <= 17) return true;
   // Pond 2 — Bottom East: fill(35, 50, 37, 53)
   if (row >= 35 && row <= 37 && col >= 50 && col <= 53) return true;
+  // Pond 3 — Inn-Side: fill(16, 52, 18, 56)
+  if (row >= 16 && row <= 18 && col >= 52 && col <= 56) return true;
   return false;
 }
 

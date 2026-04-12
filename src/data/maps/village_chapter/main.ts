@@ -71,8 +71,8 @@ function placeSquare(r: number, c: number, w: number, h: number) {
 
 function placeHill(r: number, c: number, w: number, h: number) { fill(r, c, r + h - 1, c + w - 1, HL); }
 
-// Layout Construction (Clear Path at col 21-22)
-hline(0, 0, 59, BD); hline(69,0, 59, BD); vline(0, 0, 69, BD); vline(59,0, 69, BD);
+// Layout Construction (Clear Path at col 21-23 for Northern Gateway)
+hline(0, 0, 20, BD); hline(0, 24, 59, BD); hline(69,0, 59, BD); vline(0, 0, 69, BD); vline(59,0, 69, BD);
 
 // Forest Edges (Randomized and Organic)
 for (let r = 0; r < ROWS; r++) {
@@ -88,28 +88,28 @@ fill(4, 1, 45, 3, TK);
 for (let r = 5; r < 45; r++) { if (Math.random() > 0.6) set(r, 4, TK); }
 
 // Village Paths (Divert around farm at Row 45)
-fill(1, 21, 44, 22, DV); // North segment
+fill(0, 21, 44, 22, DV); // North segment (Connects to Bridge at row 0)
 hline(44, 21, 26, DV); fill(45, 26, 54, 27, DV); // Bypass east
-hline(54, 21, 26, DV); fill(55, 21, 68, 22, DV); // Reconnect South segment
+hline(54, 21, 26, DV); fill(55, 21, 60, 22, DV); // Reconnect South segment (truncated)
 
 hline(21, 5, 55, DV); // Main horizontal cross-road
 
 // --- HOUSES, SIGNS & YARDS ---
 
-// 1. ELDER'S HOUSE (North - Stone Style)
-placeYard(4, 23, 10, 7);
-placeHouse(5, 25, 6, 4, 'STONE');
-set(9, 26, SG);
+// 1. ELDER'S HOUSE (North-Central - Stone Style)
+placeYard(10, 23, 10, 7);
+placeHouse(11, 25, 6, 4, 'STONE');
+set(15, 26, SG);
 
 // 2. YOUR HOME (Central-East - Rustic Style)
 placeYard(24, 28, 10, 7); 
 placeHouse(25, 30, 6, 4, 'RUSTIC');
 set(29, 31, SG); 
 
-// 3. NEIGHBOR A (West - Classic)
-placeYard(17, 3, 10, 7);
-placeHouse(18, 5, 6, 4, 'CLASSIC');
-set(22, 6, SG); 
+// 3. NEIGHBOR A (West-Central - Classic)
+placeYard(23, 3, 10, 7);
+placeHouse(24, 5, 6, 4, 'CLASSIC');
+set(28, 6, SG); 
 
 // 4. NEIGHBOR B (West-South - Classic)
 placeYard(39, 8, 10, 7);
@@ -117,9 +117,9 @@ placeHouse(40, 10, 6, 4, 'CLASSIC');
 set(44, 11, SG);
 
 // 5. THE VILLAGE INN (Standalone - No overlaps)
-placeYard(8, 35, 14, 10);
-placeHouse(10, 37, 10, 6, 'INN');
-set(16, 41, SG); 
+placeYard(14, 35, 14, 10);
+placeHouse(16, 37, 10, 6, 'INN');
+set(22, 41, SG); 
 
 // Aesthetic Ponds
 // Pond 1 — Central-west meadow (rows 13-15, cols 13-17).
@@ -132,23 +132,23 @@ fill(35, 50, 37, 53, WT); fill(36, 51, 36, 52, WI); // Bottom East Pond
 placeSquare(19, 18, 8, 5); 
 set(21, 21, WL2); 
 
-placeHill(4, 55, 12, 8); // Moved East to clear Inn roof
-placeWindmill(5, 52);
+placeHill(10, 55, 12, 8); // Shifted south to clear new river
+placeWindmill(11, 52);
 
 // Farms (Pushed to clear central area)
-placeFarm(1, 10, 10, 8); // Top West
+placeFarm(7, 10, 10, 8); // Top West (shifted south for river)
 placeFarm(52, 10, 15, 8); // South West
 placeFarm(55, 35, 12, 10); // South East
 
-// Northern Lake (Pushed East to clear Inn)
-hline(4, 52, 58, WT); hline(10, 52, 58, WB); vline(52, 5, 9, WL); vline(58, 5, 9, WR); fill(5, 53, 9, 57, WI);
+// Inn-Side Pond (Shifted south to clear river and formatted as a pond)
+fill(16, 52, 18, 56, WT); fill(17, 53, 17, 55, WI);
 
-// Southern Exit Gateway (Final Chapter 1 Transition)
-// 1. Crossing River (Row 65-67)
-hline(64, 0, 59, WB); hline(68, 0, 59, WT); fill(65, 0, 67, 59, WI);
+// Northern Exit Gateway (Final Chapter 1 Transition)
+// 1. Crossing River (Row 0-4)
+hline(0, 0, 59, WB); hline(4, 0, 59, WT); fill(1, 0, 3, 59, WI);
 
-// 2. Gateway Bridge (Directly at the Southern Exit)
-hline(64, 20, 24, FH); hline(68, 20, 24, FH); fill(64, 21, 68, 23, BR);
+// 2. Gateway Bridge (Directly at the Northern Exit)
+hline(0, 20, 24, FH); hline(4, 20, 24, FH); fill(0, 21, 4, 23, BR);
 
 // Random grass variation
 for (let r = 0; r < ROWS; r++) { for (let c = 0; c < COLS; c++) { if (raw[r][c] === G1 && Math.random() > 0.85) raw[r][c] = Math.random() > 0.5 ? G2 : G3; } }

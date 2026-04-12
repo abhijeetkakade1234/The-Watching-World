@@ -34,7 +34,7 @@ const DIALOGUE_MAX_MS = 5200;
 const DIALOGUE_MS_PER_CHAR = 42;
 const ROWAN_ENTITY_ID = 'rowan-bridge';
 const ROWAN_SPRITE_PATH = '/characters/elder-rowan.png';
-const ROWAN_BRIDGE_POSITION = { x: 22, y: 65 };
+const ROWAN_BRIDGE_POSITION = { x: 22, y: 5 };
 const BRIDGE_BLOCKED_MESSAGE = 'Complete the objectives first';
 const BRIDGE_BLOCKED_MESSAGE_COOLDOWN_MS = 1800;
 const BRIDGE_BLOCKED_MESSAGE_DURATION_MS = 1500;
@@ -784,23 +784,23 @@ export const createChapter1Slice: StateCreator<GameState, [], [], Chapter1Slice>
     if (targetY < 0 || targetY >= chapter1Map.length || targetX < 0 || targetX >= chapter1Map[0].length) return;
     const tileType = chapter1Map[targetY][targetX];
 
-    if (tileType === 26) {
+    if (tileType === TILES.HD) {
       let houseId: MapId | null = null;
       let houseName = '';
 
       if (targetY === 28 && (targetX === 32 || targetX === 33)) {
         houseId = 'house-boysHome';
         houseName = 'Our Home';
-      } else if (targetY === 8 && (targetX === 27 || targetX === 28)) {
+      } else if (targetY === 14 && (targetX === 27 || targetX === 28)) {
         houseId = 'house-elder';
         houseName = "Elder Kael's Hall";
-      } else if (targetY === 21 && (targetX === 7 || targetX === 8)) {
+      } else if (targetY === 27 && (targetX === 7 || targetX === 8)) {
         houseId = 'house-neighborA';
         houseName = "Finn's Cottage";
       } else if (targetY === 43 && (targetX === 12 || targetX === 13)) {
         houseId = 'house-neighborB';
         houseName = "Lyra's Abode";
-      } else if (targetY === 15 && (targetX === 41 || targetX === 42)) {
+      } else if (targetY === 21 && (targetX === 41 || targetX === 42)) {
         houseId = 'house-inn';
         houseName = 'The Village Inn';
       }
